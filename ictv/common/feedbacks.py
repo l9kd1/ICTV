@@ -19,8 +19,7 @@
 #    You should have received a copy of the GNU Affero General Public License
 #    along with ICTV.  If not, see <http://www.gnu.org/licenses/>.
 
-import web
-
+import flask
 
 def get_feedbacks():
     """ Returns feedbacks available for this request. """
@@ -36,14 +35,14 @@ def get_next_feedbacks():
 
 
 def add_feedback(type, message, value=None):
-    feedbacks = web.ctx.session.get('next_request_feedbacks', [])
+    feedbacks = flask.session.get('next_request_feedbacks', [])
     feedbacks.append({'type': type, 'message': message, 'value': value})
-    web.ctx.session.next_request_feedbacks = feedbacks
+    flask.session.next_request_feedbacks = feedbacks
 
 
 def rotate_feedbacks():
-    web.ctx.session.feedbacks = web.ctx.session.get('next_request_feedbacks', [])
-    web.ctx.session.next_request_feedbacks = []
+    flask.session.feedbacks = flask.session.get('next_request_feedbacks', [])
+    flask.session.next_request_feedbacks = []
 
 
 class Feedbacks(list):
@@ -82,8 +81,8 @@ class ImmediateFeedback(Exception):
 
 
 def store_form(form):
-    web.ctx.session.form = list(form.items())
+    flask.session.form = list(form.items())
 
 
 def pop_previous_form():
-    return web.Storage(web.ctx.session.pop('form', {}))
+    return flask.session.pop('form', {})
