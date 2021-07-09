@@ -26,7 +26,7 @@ from flask.templating import render_template
 from ictv.app import sidebar
 from ictv.common.logging import loggers_stats, get_logger_file_path
 from ictv.pages.utils import ICTVAuthPage, PermissionGate
-from ictv.common.utils import timesince, pretty_print_size
+from ictv.common.utils import timesince, pretty_print_size, sidebar
 from ictv.common import get_root_path
 
 

@@ -24,7 +24,7 @@ import web
 
 def get_feedbacks():
     """ Returns feedbacks available for this request. """
-    return Feedbacks(web.ctx.session.get('feedbacks', []))
+    return Feedbacks(flask.session.get('feedbacks', []))
 
 
 def get_next_feedbacks():
@@ -32,7 +32,7 @@ def get_next_feedbacks():
         Returns feedbacks available for the next request.
         This is implemented for compatibility reasons until all pages implement a Post/Redirect/Get pattern.
     """
-    return Feedbacks(web.ctx.session.get('next_request_feedbacks', []))
+    return Feedbacks(flask.session.get('next_request_feedbacks', []))
 
 
 def add_feedback(type, message, value=None):
@@ -87,4 +87,3 @@ def store_form(form):
 
 def pop_previous_form():
     return web.Storage(web.ctx.session.pop('form', {}))
-

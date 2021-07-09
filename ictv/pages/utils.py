@@ -209,6 +209,14 @@ class ICTVPage(MethodView):
 
         return page_url
 
+    # Allows using the old syntax with uppercase method attributes
+    def __getattr__(self,name):
+        try:
+            return self.__getattribute__(name.upper())
+        except AttributeError:
+            raise AttributeError("'{}' object has no attribute '{}'".format(self.__class__.__name__,name))
+
+
 
 class ICTVAuthPage(ICTVPage):
     """ A simple subclass to indicate that a subclassing page cannot be accessed without being authenticated. """
@@ -305,8 +313,7 @@ class PermissionGateMeta(type):
         def decorator(cls, f):
             @wraps(f)
             def decorated_function(*args, **kwargs):
-                app = flask.current_app#web.ctx.app_stack[0]
-                app.session = flask.session
+                app = flask.current_app
                 if 'user' in app.session:
                     u = User.get(app.session['user']['id'])
                     if 'real_user' in app.session:
