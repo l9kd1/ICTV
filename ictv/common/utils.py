@@ -28,6 +28,61 @@ import string
 
 import qrcode
 import qrcode.image.svg
+from functools import wraps
+
+import flask
+from ictv.models.role import UserPermissions
+
+sidebar_elements = {
+    'ictv.pages.plugins_page.PluginsPage': {'name': 'Plugins', 'icon': 'fa-plug',
+                                           'rights': UserPermissions.administrator},
+    'ictv.pages.users_page.UsersPage': {'name': 'Users', 'icon': 'fa-users',
+                                       'rights': UserPermissions.administrator},
+    'ictv.pages.buildings_page.BuildingsPage': {'name': 'Buildings', 'icon': 'fa-building-o',
+                                         'rights': UserPermissions.administrator},
+    'ictv.pages.channels_page.ChannelsPage': {'name': 'Channels', 'icon': 'fa-picture-o',
+                                             'rights': UserPermissions.no_permission},
+    'ictv.pages.screens_page.ScreensPage': {'name': 'Screens', 'icon': 'fa-television',
+                                           'rights': UserPermissions.screen_administrator},
+    'ictv.pages.storage_page.StoragePage': {'name': 'Storage', 'icon': 'fa-hdd-o',
+                                            'rights': UserPermissions.super_administrator},
+    'ictv.pages.logs_page.LogsPage': {'name': 'Logs', 'icon': 'fa-history',
+                                      'rights': UserPermissions.super_administrator},
+    'ictv.pages.emails_page.EmailPage': {'name': 'Emails', 'icon': 'fa-envelope',
+                                         'rights': UserPermissions.super_administrator}
+}
+
+def sidebar(f):
+    """ Utility method providing a simple way to populate the sidebar in function of the user permissions. """
+
+    def get_classes_from_user(user):
+        """ Returns a list as a tuple of the names of classes in the `pages` package accessible to this user. """
+        highest_permission_level = user.highest_permission_level
+        if user.disabled:
+            return ()
+        return (name for name, params in sidebar_elements.items() if params['rights'] in highest_permission_level)
+
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        app = flask.current_app
+        if 'user' in app.session and 'sidebar' not in app.session:
+            try:
+                u = User.get(app.session['user']['id'])
+                if 'real_user' in app.session:
+                    real_user = User.get(app.session['real_user']['id'])
+                    # if the real user has at least the same right as the "logged as" user
+                    if u.highest_permission_level not in real_user.highest_permission_level:
+                        raise flask.redirect('/logas/nobody',code=303)
+                user_sidebar = {}
+                for class_name in get_classes_from_user(u):
+                    e = sidebar_elements[class_name]
+                    user_sidebar[e['name']] = {'url': urls[urls.index(class_name) - 1], 'icon': e['icon']}
+                    app.session['sidebar'] = sorted(user_sidebar.items())
+            except SQLObjectNotFound:
+                return f(*args, **kwargs)
+        return f(*args, **kwargs)
+
+    return decorated_function
 
 
 def generate_secret(digits=string.digits):
@@ -95,7 +150,7 @@ def timesince(dt, default="just now", when_none=Exception()):
     """
     Returns string representing "time since" e.g.
     3 days ago, 5 hours ago etc.
-    When dt is None, raises an exception if when_none == Exception, returns when_none otherwise. 
+    When dt is None, raises an exception if when_none == Exception, returns when_none otherwise.
     """
 
     if dt is None:

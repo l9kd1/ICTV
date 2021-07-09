@@ -222,7 +222,7 @@ class PermissionGateMeta(type):
         def decorator(cls, f):
             @wraps(f)
             def decorated_function(*args, **kwargs):
-                app = web.ctx.app_stack[0]
+                app = flask.current_app
                 if 'user' in app.session:
                     u = User.get(app.session['user']['id'])
                     if 'real_user' in app.session:

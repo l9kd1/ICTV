@@ -27,7 +27,7 @@ from sqlobject.dberrors import DuplicateEntryError
 
 from ictv.models.role import UserPermissions
 from ictv.models.user import User
-from ictv.app import sidebar
+from ictv.common.utils import sidebar
 from ictv.common.feedbacks import add_feedback, ImmediateFeedback, store_form
 from ictv.pages.utils import ICTVAuthPage, PermissionGate
 

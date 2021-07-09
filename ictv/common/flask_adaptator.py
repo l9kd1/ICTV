@@ -1,3 +1,5 @@
+from flask import Flask, session
+
 # Allows the use of the old rendering syntax previously used in web.py
 class render_jinja:
 
@@ -13,3 +15,9 @@ class render_jinja:
         path = name + '.html'
         t = self._lookup.get_template(path)
         return t.render
+
+class FrankenFlask(Flask):
+
+    def __init__(self,name):
+        super().__init__(name)
+        self.session = session

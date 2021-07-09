@@ -58,12 +58,7 @@ from ictv.storage.download_manager import DownloadManager
 from ictv.storage.transcoding_queue import TranscodingQueue
 
 
-from common.flask_adaptator import render_jinja
-
-from flask import Flask
-from flask.views import View
-
-app = Flask(__name__)
+from web.contrib.template import render_jinja
 
 urls = (
     '/', 'ictv.app.IndexPage',
@@ -166,10 +161,10 @@ def get_data_edit_object(screen):
     return json.dumps(object)
 
 class IndexPage(ICTVAuthPage):
+    @sidebar
     def GET(self):
         return self.renderer.home(homepage_description=self.config['homepage_description'], user_disabled=User.get(self.session['user']['id']).disabled)
 
-app.add_url_rule('/', view_func=IndexPage.as_view('index'))
 
 def get_request_errors_preprocessor(db_logger, pages_logger):
     def request_errors_preprocessor(query):
