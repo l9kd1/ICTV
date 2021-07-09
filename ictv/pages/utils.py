@@ -23,8 +23,10 @@ import re
 from functools import wraps
 from logging import getLogger
 
-import web
-from flask.views import View
+# from flask import current_app, session
+import flask
+from flask import session
+from flask.views import MethodView
 
 from ictv.models.role import UserPermissions
 from ictv.models.user import User
@@ -36,7 +38,7 @@ from ictv.storage.download_manager import DownloadManager
 from ictv.storage.transcoding_queue import TranscodingQueue
 
 
-class ICTVPage(View):
+class ICTVPage(MethodView):
     """
         A base for all the pages of the ICTV webapp.
         Contains references to the PluginManager, web.py renderer & session, ICTVRenderer,
@@ -46,7 +48,7 @@ class ICTVPage(View):
     @property
     def app(self):
         """ Returns the web.py application singleton of ICTV Core. """
-        return web.ctx.app_stack[0]
+        return flask.current_app
 
     @property
     def plugin_manager(self) -> PluginManager:
@@ -59,9 +61,9 @@ class ICTVPage(View):
         return self.app.ictv_renderer
 
     @property
-    def session(self) -> web.session.Session:
+    def session(self) -> flask.session:
         """ Returns the webapp session. """
-        return self.app.session
+        return session#self.app.session
 
     @property
     def renderer(self):
