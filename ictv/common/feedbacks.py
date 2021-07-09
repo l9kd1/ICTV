@@ -20,7 +20,7 @@
 #    along with ICTV.  If not, see <http://www.gnu.org/licenses/>.
 
 import web
-
+import flask
 
 def get_feedbacks():
     """ Returns feedbacks available for this request. """
