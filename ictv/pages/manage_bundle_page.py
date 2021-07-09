@@ -52,7 +52,7 @@ class ManageBundlePage(ICTVAuthPage):
         )
 
     @PermissionGate.administrator
-    def GET(self, bundle_id):
+    def get(self, bundle_id):
         try:
             bundle = ChannelBundle.get(bundle_id)
             u = User.get(self.session['user']['id'])
@@ -61,7 +61,7 @@ class ManageBundlePage(ICTVAuthPage):
         return self.render_page(bundle, u)
 
     @PermissionGate.administrator
-    def POST(self, bundle_id):
+    def post(self, bundle_id):
         def wrong_channel(channel, bundle, add):
             """ returns True if the channel to add is the bundle itself
                 or if the channel is a PluginChannel with disabled plugin """

@@ -27,7 +27,7 @@ from ictv.pages.utils import ICTVPage
 
 
 class ScreenRouter(ICTVPage):
-    def GET(self, mac):
+    def get(self, mac):
         """ Redirects a screen with its given mac to its secret link. """
         try:
             screen = ScreenMac.selectBy(mac=mac).getOne().screen

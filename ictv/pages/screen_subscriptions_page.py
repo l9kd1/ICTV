@@ -72,7 +72,7 @@ class ScreenSubscriptionsPage(ICTVAuthPage):
         )
 
     @PermissionGate.screen_administrator
-    def GET(self, screen_id):
+    def get(self, screen_id):
         try:
             screen = Screen.get(screen_id)
             u = User.get(self.session['user']['id'])
@@ -83,7 +83,7 @@ class ScreenSubscriptionsPage(ICTVAuthPage):
         return self.render_page(screen, u)
 
     @PermissionGate.screen_administrator
-    def POST(self, screen_id):
+    def post(self, screen_id):
         def wrong_channel(channel, subscribe, user):
             """ returns True if the the user wants to subscribe to the channel while its plugin is not activated or if
                 the user tries to subscribe to the channel without being in its authorized subscribers"""

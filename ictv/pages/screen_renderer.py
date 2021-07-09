@@ -33,7 +33,7 @@ screens_logger = logging.getLogger('screens')
 
 
 class ScreenRenderer(ICTVPage):
-    def GET(self, screen_id, secret):
+    def get(self, screen_id, secret):
         """ Render the channels of this screen. """
         try:
             screen = Screen.get(screen_id)

@@ -23,7 +23,6 @@ import json
 import logging
 import re
 
-import web
 from sqlobject import NOT
 from sqlobject import SQLObjectNotFound
 from sqlobject.dberrors import DuplicateEntryError
@@ -41,13 +40,13 @@ logger = logging.getLogger('pages')
 
 
 class ChannelsPage(ICTVAuthPage):
-    def GET(self):
+    def get(self):
         return self.render_page()
 
     @PermissionGate.channel_administrator
-    def POST(self):
+    def post(self):
         """ Handles channel creation, editing, deletion, configuration and user permissions. """
-        form = web.input()
+        form = self.form
         current_user = User.get(self.session['user']['id'])
         channel = None
         try:
@@ -67,7 +66,7 @@ class ChannelsPage(ICTVAuthPage):
             if form.action.startswith('create'):
                 if UserPermissions.administrator not in current_user.highest_permission_level:
                     logger.warning('user %s tried to create a channel without being admin', current_user.log_name)
-                    raise web.forbidden()
+                    raise self.forbidden()
 
                 try:
                     if form.action == 'create-channel':
@@ -93,7 +92,7 @@ class ChannelsPage(ICTVAuthPage):
                 logger.info('channel ' + channel.name + ' created by ' + current_user.log_name)
             elif form.action.startswith('edit'):
                 if UserPermissions.administrator not in current_user.highest_permission_level:
-                    raise web.forbidden()
+                    raise self.forbidden()
                 try:
                     form.id = int(form.id)
                     channel = (PluginChannel if form.action == 'edit-channel' else Channel).get(form.id)
@@ -136,7 +135,7 @@ class ChannelsPage(ICTVAuthPage):
                 if not current_user.super_admin:
                     logger.warning('the user %s tried to delete a channel without having the rights to do it',
                                    current_user.log_name)
-                    raise web.forbidden()
+                    raise self.forbidden()
                 try:
                     form.id = int(form.id)
                     channel = Channel.get(form.id)
@@ -161,7 +160,7 @@ class ChannelsPage(ICTVAuthPage):
                     form.id = int(form.id)
                     channel = PluginChannel.get(form.id)
                     if not channel.has_admin(current_user) and UserPermissions.administrator not in current_user.highest_permission_level:
-                        raise web.forbidden()
+                        raise self.forbidden()
                     form.name = channel.name
                     for user_id, diff in form.users.items():
                         user_id = int(user_id)

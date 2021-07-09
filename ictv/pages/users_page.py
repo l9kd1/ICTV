@@ -33,7 +33,7 @@ from ictv.pages.utils import ICTVAuthPage, PermissionGate
 
 
 class UserDetailPage(ICTVAuthPage):
-    def GET(self, id):
+    def get(self, id):
         try:
             id = int(id)
             u = User.get(id)
@@ -52,11 +52,11 @@ class UsersPage(ICTVAuthPage):
     pattern = re.compile(r"(^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+(\.[a-zA-Z0-9-.]+$)?)")
 
     @PermissionGate.administrator
-    def GET(self):
+    def get(self):
         return self.render_page()
 
     @PermissionGate.administrator
-    def POST(self):
+    def post(self):
         """ Handles user creation, editing and deletion. """
         form = web.input()
         super_admin = form.get('super_admin', False) == 'on'

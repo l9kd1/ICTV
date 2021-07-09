@@ -39,7 +39,7 @@ from ictv.pages.utils import ICTVAuthPage, PermissionGate
 class ScreenConfigPage(ICTVAuthPage):
 
     @PermissionGate.screen_administrator
-    def GET(self, id):
+    def get(self, id):
         try:
             id = int(id)
             sc = Screen.get(id)
@@ -55,7 +55,7 @@ class ScreenConfigPage(ICTVAuthPage):
 class DetailPage(ICTVAuthPage):
 
     @PermissionGate.screen_administrator
-    def GET(self,id):
+    def get(self,id):
         try:
             id = int(id)
             sc = Screen.get(id)
@@ -104,11 +104,11 @@ class ScreensPage(ICTVAuthPage):
         return ''.join(mac_bytes)
 
     @PermissionGate.screen_administrator
-    def GET(self):
+    def get(self):
         return self.render_page()
 
     @PermissionGate.screen_administrator
-    def POST(self):
+    def post(self):
         """ Handles screen creation, editing, deletion, channel subscriptions. """
         form = web.input()
         u = User.get(self.session['user']['id'])

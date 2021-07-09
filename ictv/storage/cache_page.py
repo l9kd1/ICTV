@@ -27,7 +27,7 @@ from ictv.pages.utils import ICTVPage
 
 
 class CachePage(ICTVPage):
-    def GET(self, asset_id):
+    def get(self, asset_id):
         """ Waits for the given asset to be downloaded. Redirects the user to the asset when done. """
         try:
             asset_id = int(asset_id)

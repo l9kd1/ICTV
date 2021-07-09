@@ -59,9 +59,7 @@ from ictv.storage.cache_manager import CleanupScheduler
 from ictv.storage.download_manager import DownloadManager
 from ictv.storage.transcoding_queue import TranscodingQueue
 
-from ictv.common.flask_adaptator import render_jinja, FrankenFlask
-
-
+from ictv.flask.migration_adapter import render_jinja, FrankenFlask, seeother
 from ictv.flask.mapping import init_flask_url_mapping
 
 
@@ -76,7 +74,7 @@ def get_data_edit_object(screen):
 
 class IndexPage(ICTVAuthPage):
     @sidebar
-    def GET(self):
+    def get(self):
         return self.renderer.home(homepage_description=self.config['homepage_description'], user_disabled=User.get(self.session['user']['id']).disabled)
 
 
@@ -104,7 +102,7 @@ def load_templates_and_themes():
 def get_saml_processor(app):
     def saml_processor(handler):
         if 'user' not in app.session:
-            raise flask.redirect('/shibboleth?sso',code = 303)
+            raise seeother('/shibboleth?sso')
         return handler()
     return saml_processor
 
@@ -112,7 +110,7 @@ def get_saml_processor(app):
 def get_local_authentication_processor(app):
     def local_authentication_processor(handler):
         if 'user' not in app.session and not flask.request.path.startswith('/login') and not flask.request.path.startswith('/reset'):
-            raise flask.redirect('/login',code=303)
+            raise seeother('/login')
         return handler()
     return local_authentication_processor
 
@@ -198,7 +196,7 @@ def dump_log_stats():
 
 class DebugEnv(ICTVAuthPage):
     @PermissionGate.super_administrator
-    def GET(self):
+    def get(self):
         from pprint import pformat
         return pformat(flask.request.__dict__) + '\n' + pformat(self.config)
 

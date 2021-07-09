@@ -23,11 +23,10 @@ import re
 from functools import wraps
 from logging import getLogger
 
-# from flask import current_app, session
 import flask
-from flask import session
 from flask.views import MethodView
 
+from ictv.flask.migration_adapter import Storage, forbidden, seeother
 from ictv.models.role import UserPermissions
 from ictv.models.user import User
 from ictv.plugin_manager.plugin_manager import PluginManager
@@ -62,7 +61,7 @@ class ICTVPage(MethodView):
     @property
     def session(self) -> flask.session:
         """ Returns the webapp session. """
-        return session#self.app.session
+        return flask.session
 
     @property
     def renderer(self):
@@ -98,6 +97,17 @@ class ICTVPage(MethodView):
     def version(self):
         """ Returns the ICTV version. """
         return self.app.version
+    
+    @property
+    def form(self) -> Storage:
+        """ Returns the request form. """
+        return Storage(flask.request.form)
+
+    def forbidden(self, message=None):
+        return forbidden(message)
+
+    def seeother(self, url):
+        return seeother(url)
 
     def url_for(self, page_class, *args):
         """ Returns an URL filled with the given arguments to the given page. """
@@ -117,13 +127,6 @@ class ICTVPage(MethodView):
 
         return page_url
 
-    # Allows using the old syntax with uppercase method attributes
-    def __getattr__(self,name):
-        try:
-            return self.__getattribute__(name.upper())
-        except AttributeError:
-            raise AttributeError("'{}' object has no attribute '{}'".format(self.__class__.__name__,name))
-
 
 
 class ICTVAuthPage(ICTVPage):
@@ -132,7 +135,7 @@ class ICTVAuthPage(ICTVPage):
 
 
 class DummyLogin(ICTVPage):
-    def GET(self, email):
+    def get(self, email):
         u = User.selectBy(email=email).getOne(None)
         if u is not None:
             self.session['user'] = u.to_dictionary(['id', 'fullname', 'email'])
@@ -143,7 +146,7 @@ class DummyLogin(ICTVPage):
 
 class DummyRenderer(ICTVAuthPage):
     @ChannelGate.contributor
-    def GET(self, channelid, channel):
+    def get(self, channelid, channel):
         return self.ictv_renderer.preview_capsules(self.plugin_manager.get_plugin_content(channel))
 
 
@@ -154,7 +157,7 @@ class LogAs(ICTVAuthPage):
     """
     logger = getLogger('pages')
 
-    def GET(self, target_user):
+    def get(self, target_user):
         @PermissionGate.administrator
         def log_as():
             u = User.selectBy(email=target_user).getOne()
@@ -182,7 +185,7 @@ class LogAs(ICTVAuthPage):
 
 class DummyCapsuleRenderer(ICTVAuthPage):  # TODO: Move this to editor/app.py
     @ChannelGate.contributor
-    def GET(self, channelid, capsuleid, channel):
+    def get(self, channelid, capsuleid, channel):
         plugin = self.plugin_manager.get_plugin(channel.plugin.name)
         capsules = plugin.get_content(channelid=int(channelid), capsuleid=int(capsuleid))
         PluginManager.dereference_assets(capsules)
@@ -190,13 +193,13 @@ class DummyCapsuleRenderer(ICTVAuthPage):  # TODO: Move this to editor/app.py
 
 
 class LogoutPage(ICTVAuthPage):
-    def POST(self):
+    def post(self):
         self.session.kill()
         return web.seeother('/')
 
 
 class TourPage(ICTVAuthPage):
-    def POST(self, status):
+    def post(self, status):
         User.get(self.session['user']['id']).has_toured = status == 'ended'
         raise web.seeother(web.ctx.env.get('HTTP_REFERER', '/'))
 

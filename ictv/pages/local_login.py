@@ -33,12 +33,12 @@ logger = getLogger('local_login')
 
 
 class LoginPage(ICTVPage):
-    def GET(self):
+    def get(self):
         if 'user' in self.session:
             raise web.seeother('/')
         return self.render_page()
 
-    def POST(self):
+    def post(self):
         if 'user' in self.session:
             raise web.seeother('/')
         form = web.input()
@@ -58,7 +58,7 @@ class LoginPage(ICTVPage):
 
 
 class GetResetLink(ICTVAuthPage):
-    def GET(self):  # TODO: Redirect if not using local authentication
+    def get(self):  # TODO: Redirect if not using local authentication
         user = User.get(self.session['user']['id'])
         user.reset_secret = utils.generate_secret()
         logger.info('User %s requested a new password reset link', user.log_name)
@@ -66,7 +66,7 @@ class GetResetLink(ICTVAuthPage):
 
 
 class ResetPage(ICTVPage):
-    def GET(self, secret):
+    def get(self, secret):
         user = User.selectBy(reset_secret=secret).getOne(None)
         if not user:
             logger.warning('IP %s tried to access password reset page with invalid secret', web.ctx.ip)
@@ -75,7 +75,7 @@ class ResetPage(ICTVPage):
             raise web.redirect('/')
         return self.standalone_renderer.reset(user=user)
 
-    def POST(self, secret):
+    def post(self, secret):
         user = User.selectBy(reset_secret=secret).getOne(None)
         form = web.input()
         try:

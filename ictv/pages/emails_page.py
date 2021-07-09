@@ -40,12 +40,12 @@ logger = logging.getLogger('pages')
 
 class EmailPage(ICTVAuthPage):
     @sidebar
-    def GET(self):
+    def get(self):
         u = User.get(self.session['user']['id'])
         channels = Channel.select()
         return self.renderer.emails(user=u, channels=channels)
 
-    def POST(self):
+    def post(self):
         form = web.input()
         subject = form['subject']
         email_body = form['body']

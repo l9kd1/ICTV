@@ -30,7 +30,7 @@ from ictv.pages.utils import ICTVPage
 
 class Kickstart(ICTVPage):
     """ A simple page that serves KS files, providing a way to adapt the client deployment further in the future. """
-    def GET(self, file):
+    def get(self, file):
         path = os.path.join(get_root_path(), 'client', 'ks', file)
         if os.path.exists(path):
             flags = 'r'

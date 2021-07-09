@@ -77,7 +77,7 @@ def prepare_request():
 
 
 class MetadataPage(ICTVPage):
-    def GET(self):
+    def get(self):
         req = prepare_request()
         settings = build_settings(self.config['saml2'])
         auth = init_saml_auth(req, settings)
@@ -94,7 +94,7 @@ class MetadataPage(ICTVPage):
 
 
 class Shibboleth(ICTVPage):
-    def GET(self):
+    def get(self):
         req = prepare_request()
         settings = build_settings(self.config['saml2'])
         auth = init_saml_auth(req, settings)
@@ -109,7 +109,7 @@ class Shibboleth(ICTVPage):
 
         raise web.seeother('/')
 
-    def POST(self):
+    def post(self):
         """
             Receive the POST binding request from IDP.
 

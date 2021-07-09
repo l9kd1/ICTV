@@ -27,7 +27,7 @@ from ictv.pages.utils import ICTVPage
 
 
 class ScreenClient(ICTVPage):
-    def GET(self, screen_id, secret):
+    def get(self, screen_id, secret):
         """ Serves the pure web-based client for this screen. """
         try:
             screen = Screen.get(screen_id)

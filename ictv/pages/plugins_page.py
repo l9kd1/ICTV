@@ -34,11 +34,11 @@ logger = logging.getLogger('pages')
 
 class PluginsPage(ICTVAuthPage):
     @PermissionGate.administrator
-    def GET(self):
+    def get(self):
         return self.render_page()
 
     @PermissionGate.super_administrator
-    def POST(self):
+    def post(self):
         """ Handles plugin editing and activation. """
         form = web.input()
         try:
@@ -109,7 +109,7 @@ class PluginsPage(ICTVAuthPage):
 
 class PluginConfigPage(ICTVAuthPage):
     @PermissionGate.super_administrator
-    def GET(self, plugin_id):
+    def get(self, plugin_id):
         return self.render_page(plugin = Plugin.get(plugin_id))
 
     @sidebar

@@ -27,7 +27,7 @@ from ictv.pages.utils import ICTVPage
 
 
 class ChannelRenderer(ICTVPage):
-    def GET(self, channel_id, secret):
+    def get(self, channel_id, secret):
         """ Render the capsules of this channel. """
         try:
             channel = Channel.get(channel_id)

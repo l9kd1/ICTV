@@ -35,6 +35,8 @@ from sqlobject.main import SQLObjectNotFound
 from ictv.models.role import UserPermissions
 from ictv.models.user import User
 
+from ictv.flask.migration_adapter import seeother
+
 
 urls = (
     '/', 'ictv.app.IndexPage',
@@ -114,7 +116,7 @@ def sidebar(f):
                     real_user = User.get(app.session['real_user']['id'])
                     # if the real user has at least the same right as the "logged as" user
                     if u.highest_permission_level not in real_user.highest_permission_level:
-                        raise flask.redirect('/logas/nobody', code=303)
+                        raise seeother('/logas/nobody')
                 user_sidebar = {}
                 for class_name in get_classes_from_user(u):
                     e = sidebar_elements[class_name]
