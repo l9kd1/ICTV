@@ -254,7 +254,7 @@ class ThemesMeta(type):
         for theme in [p for p in os.listdir(themes_directory) if os.path.isdir(os.path.join(themes_directory, p))]:
             try:
                 with open(os.path.join(themes_directory, theme, 'config' + os.extsep + 'yaml')) as config_file:
-                    config = yaml.load(config_file)
+                    config = yaml.unsafe_load(config_file)
                 self._themes[theme] = config
                 if 'base_color' in self._themes[theme]:
                     theme_base_color = self._themes[theme]['base_color']

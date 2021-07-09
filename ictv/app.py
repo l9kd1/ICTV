@@ -28,14 +28,15 @@ import sys
 from functools import wraps
 
 import builtins
-import web
+# import web
 import yaml
 from sqlobject import SQLObjectNotFound, sqlhub
 from sqlobject.dberrors import DatabaseError
-from web.py3helpers import string_types
+# from web.py3helpers import string_types
 
-# from flask import Flask, render_template
-# from flask.views import MethodView
+import flask
+from flask import Flask, render_template, session
+from flask.views import MethodView
 
 import ictv
 import ictv.common
@@ -57,8 +58,6 @@ from ictv.storage.cache_manager import CleanupScheduler
 from ictv.storage.download_manager import DownloadManager
 from ictv.storage.transcoding_queue import TranscodingQueue
 
-
-from web.contrib.template import render_jinja
 
 urls = (
     '/', 'ictv.app.IndexPage',
@@ -116,7 +115,7 @@ sidebar_elements = {
 }
 
 # Explicitly set web.py debugging mode to false
-web.config.debug = False
+# web.config.debug = False
 
 
 def sidebar(f):
@@ -161,10 +160,14 @@ def get_data_edit_object(screen):
     return json.dumps(object)
 
 class IndexPage(ICTVAuthPage):
-    @sidebar
-    def GET(self):
-        return self.renderer.home(homepage_description=self.config['homepage_description'], user_disabled=User.get(self.session['user']['id']).disabled)
-
+    # @sidebar
+    def get(self):
+        return '<p>hello</p>'
+        # return render_template('home.html',
+        #     base="base.html",
+        #     homepage_description="test",#self.config['homepage_description'], 
+        #     user_disabled=True#User.get(self.session['user']['id']).disabled
+        # )
 
 def get_request_errors_preprocessor(db_logger, pages_logger):
     def request_errors_preprocessor(query):
@@ -299,11 +302,11 @@ if not is_test():  # TODO: Find why this ignores the first SIGINT when placed in
 
 def get_config(config_path):
     with open(config_path) as f:
-        config = yaml.load(f)
+        config = yaml.unsafe_load(f)
     with open(os.path.join(get_root_path(), 'configuration.metadata' + os.extsep + 'yaml')) as f:
-        metadata = yaml.load(f)
+        metadata = yaml.unsafe_load(f)
     with open(os.path.join(get_root_path(), 'configuration.default' + os.extsep + 'yaml')) as f:
-        defaults = yaml.load(f)
+        defaults = yaml.unsafe_load(f)
 
     def validate_config(config_dict, metadata, defaults, prefix=''):
         """
@@ -380,138 +383,140 @@ def get_config(config_path):
         if not os.path.exists(default_slides_path):
             raise Exception('Default slides config file could not be found in %s' % default_slides_path)
         with open(default_slides_path) as default_slides_file:
-            config_dict['default_slides'] = yaml.load(default_slides_file)
+            config_dict['default_slides'] = yaml.unsafe_load(default_slides_file)
 
         return config_dict
 
     return load_default_slides(config)
 
-def get_app(config_path, sessions_path=""):
+class UserAPI(MethodView):
+    def get(self):
+        return f"<p>Hello user</p>"
+            
+def get_app(config, sessions_path=""):
     """
         Returns the web.py main application of ICTV.
         Currently, only one application can be run a time due to how data such as assets, database, config files
         or plugins is stored.
     """
-    # Loads ICTV core config file
-    config_file = get_config(config_path)
     if database.database_path is None:
-        database.database_path = config_file['database_uri']
+        database.database_path = config['database_uri']
 
     app_urls = urls
-    if config_file['debug']['dummy_login']:
+    if config['debug']['dummy_login']:
         app_urls += ('/login/(.+)', 'ictv.pages.utils.DummyLogin')
 
-    if config_file['debug']['debug_env']:
+    if config['debug']['debug_env']:
         app_urls += ('/debug_env', 'DebugEnv')
 
-    if 'local' in config_file['authentication']:
+    if 'local' in config['authentication']:
         app_urls += ('/login', 'ictv.pages.local_login.LoginPage',
                      '/reset', 'ictv.pages.local_login.GetResetLink',
                      '/reset/(.+)', 'ictv.pages.local_login.ResetPage',
                      '/logout', 'ictv.pages.utils.LogoutPage',)
 
-    if 'saml2' in config_file['authentication']:
+    if 'saml2' in config['authentication']:
         app_urls += ('/shibboleth', 'ictv.pages.shibboleth.Shibboleth',
                      '/shibboleth_metadata', 'ictv.pages.shibboleth.MetadataPage',)
 
     # Create a base web.py application
-    app = web.application(app_urls, globals())
-    app.config = config_file
+    app = Flask(__name__)
+
+    app.add_url_rule('/', view_func=IndexPage.as_view('index_page'))
+    # app.config = config
 
     app.version = ictv.common.__version__
 
     with open(os.path.join(get_root_path(), 'info' + os.extsep + 'yaml')) as f:
         # Loads ICTV user info texts
-        info_texts = yaml.load(f)
+        info_texts = yaml.unsafe_load(f)
 
     # Load the SMTP config into web.py
-    smtp_conf = app.config.get('smtp', None)
-    if smtp_conf:
-        web.config.smtp_sendername = smtp_conf['sender_name']
-        web.config.smtp_server = smtp_conf['host']
-        web.config.smtp_port = smtp_conf['port']
-        web.config.smtp_username = smtp_conf.get('username', '')
-        web.config.smtp_password = smtp_conf.get('password', '')
-        web.config.smtp_starttls = smtp_conf.get('starttls', False)
+    # smtp_conf = app.config.get('smtp', None)
+    # if smtp_conf:
+    #     web.config.smtp_sendername = smtp_conf['sender_name']
+    #     web.config.smtp_server = smtp_conf['host']
+    #     web.config.smtp_port = smtp_conf['port']
+    #     web.config.smtp_username = smtp_conf.get('username', '')
+    #     web.config.smtp_password = smtp_conf.get('password', '')
+    #     web.config.smtp_starttls = smtp_conf.get('starttls', False)
 
     # Create a persistent HTTP session storage for the app
-    app.session = web.session.Session(app, OptimisticThreadSafeDisktore(os.path.join(sessions_path, 'sessions')))
+    # app.session = web.session.Session(app, OptimisticThreadSafeDisktore(os.path.join(sessions_path, 'sessions')))
+    app.secret_key = 'fwerrknu384nzAUGGDAG238hmnasd'
 
-    # Populate the web.py templates globals
-    template_globals = {'session': app.session,
+    # # Populate the web.py templates globals
+    template_globals = {'session': flask.session,
                         'get_feedbacks': get_feedbacks, 'get_next_feedbacks': get_next_feedbacks,
                         'pop_previous_form': pop_previous_form,
                         'UserPermissions': UserPermissions, 'json': json,
                         'str': str, 'sorted': sorted, 'hasattr': hasattr, 'sidebar_collapse': False, 'show_header': True,
                         'show_footer': True, 're': re, 'info': info_texts, 'make_tooltip': make_tooltip,
                         'make_alert': make_alert, 'escape': html.escape,
-                        'show_reset_password':  'local' in app.config['authentication'],
-                        'homedomain': lambda: web.ctx.homedomain, 'generate_secret': generate_secret,
+                        # 'show_reset_password':  'local' in app.config['authentication'],
+                        # 'homedomain': lambda: web.ctx.homedomain, 'generate_secret': generate_secret,
                         'version': lambda: app.version, 'pretty_print_size': pretty_print_size, 'timesince': timesince,
-                        'User': User, 'get_user': lambda: User.get(app.session['user']['id']),
+                        'User': User, 'get_user': lambda: User.get(flask.session['user']['id']),
                         'get_data_edit_object': get_data_edit_object}
-    # Init the web.py renderer used for the admin interface
-    template_kwargs = {'loc': os.path.join(get_root_path(), 'templates/'),
-                       'cache': not app.config['debug']['debug_on_error'],
-                       'globals': template_globals}
+    # # Init the web.py renderer used for the admin interface
+    # template_kwargs = {'loc': os.path.join(get_root_path(), 'templates/'),
+    #                    'cache': not app.config['debug']['debug_on_error'],
+    #                    'globals': template_globals}
 
-    ### OLD ###
-    # app.renderer = web.template.render(base='base', **template_kwargs)
-
-    # # Init a second web.py renderer without any base template
-    # app.standalone_renderer = web.template.render(**template_kwargs)
-    ###########
-
+    app.jinja_env.globals = template_globals
     ### Jinja2 ###
-    app.renderer = render_jinja(os.path.join(get_root_path(), 'templates/'))
-    app.renderer._lookup.globals.update(base='base.html', **template_globals)
+    # app.renderer = render_jinja(os.path.join(get_root_path(), 'templates/'))
+    # app.renderer._lookup.globals.update(base='base.html', **template_globals)
 
-    app.standalone_renderer = render_jinja(os.path.join(get_root_path(), 'templates/'))
-    app.standalone_renderer._lookup.globals.update(**template_globals)
+    # app.standalone_renderer = render_jinja(os.path.join(get_root_path(), 'templates/'))
+    # app.standalone_renderer._lookup.globals.update(**template_globals)
     ###########
 
     # Init loggers
-    load_loggers_stats()
-    # Determine logging level and user feedback when an internal error occurs based on ICTV core config
-    level = logging.INFO
-    if app.config['debug']['debug_on_error']:
-        level = logging.DEBUG
-        app.internalerror = web.debugerror
-    loggers_to_init = ['app', 'pages', 'screens', 'plugin_manager', 'storage_manager', 'local_login', 'database', 'transcoding_queue']
-    for logger_name in loggers_to_init:
-        init_logger(logger_name, level, rotation_interval=app.config['logs']['rotation_interval'], backup_count=app.config['logs']['backup_count'])
+    # load_loggers_stats()
+    # # Determine logging level and user feedback when an internal error occurs based on ICTV core config
+    # level = logging.INFO
+    # if app.config['debug']['debug_on_error']:
+    #     level = logging.DEBUG
+    #     # app.internalerror = web.debugerror
 
-    # Init the renderer used for slide, capsule, channel and screen rendering
-    app.ictv_renderer = ICTVRenderer(app)
-    # Init the plugin manager, used as a gateway between ICTV core and its plugins.
-    app.plugin_manager = PluginManager(app)
+    # loggers_to_init = ['app', 'pages', 'screens', 'plugin_manager', 'storage_manager', 'local_login', 'database', 'transcoding_queue']
+    # for logger_name in loggers_to_init:
+    #     init_logger(logger_name, level, rotation_interval=app.config['logs']['rotation_interval'], backup_count=app.config['logs']['backup_count'])
 
-    # Init the download manager, a download queue which asynchronously downloads assets from the network
-    app.download_manager = DownloadManager()
-    # Init the cleanup manager which will regularly cleanup unused cached assets
-    app.cleanup_scheduler = CleanupScheduler()
-    app.cleanup_scheduler.start()
-    # Init the video transcoding queue which will convert videos to WebM format using FFmpeg
-    app.transcoding_queue = TranscodingQueue()
+    # # Init the renderer used for slide, capsule, channel and screen rendering
+    # app.ictv_renderer = ICTVRenderer(app)
+    # # Init the plugin manager, used as a gateway between ICTV core and its plugins.
+    # app.plugin_manager = PluginManager(app)
 
-    # Add an hook to make session available through web.ctx for plugin webapps
-    def session_hook():
-        web.ctx.session = app.session
-        web.template.Template.globals['session'] = app.session
+    # # Init the download manager, a download queue which asynchronously downloads assets from the network
+    # app.download_manager = DownloadManager()
+    # # Init the cleanup manager which will regularly cleanup unused cached assets
+    # app.cleanup_scheduler = CleanupScheduler()
+    # app.cleanup_scheduler.start()
+    # # Init the video transcoding queue which will convert videos to WebM format using FFmpeg
+    # app.transcoding_queue = TranscodingQueue()
 
-    app.add_processor(web.loadhook(session_hook))
+    # # Add an hook to make session available through web.ctx for plugin webapps
+    # def session_hook():
+    #     web.ctx.session = app.session
+    #     web.template.Template.globals['session'] = app.session
 
-    # Add a preprocessor to populate web.ctx with meaningful values when app is run behind a proxy
-    app.add_processor(proxy_web_ctx_processor)
-    # Add a preprocessor to encapsulate every SQL requests in a transaction on a per HTTP request basis
-    app.add_processor(get_request_errors_preprocessor(logging.getLogger('database'), logging.getLogger('pages')))
-    # Add an general authentication processor to handle user authentication
-    app.add_processor(get_authentication_processor(app))
-    # Add a hook to clean feedbacks from the previous request and prepare next feedbacks to be shown to the user
-    app.add_processor(web.unloadhook(rotate_feedbacks))
+    # app.add_processor(web.loadhook(session_hook))
+
+    # # Add a preprocessor to populate web.ctx with meaningful values when app is run behind a proxy
+    # app.add_processor(proxy_web_ctx_processor)
+    # # Add a preprocessor to encapsulate every SQL requests in a transaction on a per HTTP request basis
+    # app.add_processor(get_request_errors_preprocessor(logging.getLogger('database'), logging.getLogger('pages')))
+    # # Add an general authentication processor to handle user authentication
+    # app.add_processor(get_authentication_processor(app))
+    # # Add a hook to clean feedbacks from the previous request and prepare next feedbacks to be shown to the user
+    # app.add_processor(web.unloadhook(rotate_feedbacks))
 
     # Instantiate plugins through the plugin manager
-    app.plugin_manager.instantiate_plugins(app)
+    # app.plugin_manager.instantiate_plugins(app)
+
+
 
     # Load themes and templates into database
     sqlhub.doInTransaction(load_templates_and_themes)
@@ -527,16 +532,17 @@ def close_app(app):
     app.plugin_manager.stop()
 
 
-def main(config_file):
+def main(config):
     logger = logging.getLogger('app')
     try:
-        app = get_app(config_file)
-        if is_test() or app.config['debug']['serve_static']:
-            os.chdir(get_root_path())
-            if not os.path.exists(os.path.join(get_root_path(), 'sessions')):
-                os.mkdir(os.path.join(get_root_path(), 'sessions'))
+        app = get_app(config)
+        # if is_test() or app.config['debug']['serve_static']:
+        #     os.chdir(get_root_path())
+        #     if not os.path.exists(os.path.join(get_root_path(), 'sessions')):
+        #         os.mkdir(os.path.join(get_root_path(), 'sessions'))
         if not is_test():
-            app.run()
+            address_port = config['address_port'].rsplit(':',1)
+            app.run(host=address_port[0], port=address_port[1], debug=config['debug']!=None)
         else:
             return app
     except Exception as e:
