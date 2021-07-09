@@ -40,7 +40,7 @@ from flask.views import MethodView
 
 import ictv
 import ictv.common
-from ictv import database
+from ictv import database, pages
 from ictv.common import get_root_path
 from ictv.models.log_stat import LogStat
 from ictv.models.role import UserPermissions
@@ -59,96 +59,9 @@ from ictv.storage.download_manager import DownloadManager
 from ictv.storage.transcoding_queue import TranscodingQueue
 
 
-urls = (
-    '/', 'ictv.app.IndexPage',
-    '/users', 'ictv.pages.users_page.UsersPage',
-    '/users/(\d+)','ictv.pages.users_page.UserDetailPage',
-    '/screens', 'ictv.pages.screens_page.ScreensPage',
-    '/screens/(\d+)', 'ictv.pages.screens_page.DetailPage',
-    '/screens/(\d+)/config', 'ictv.pages.screens_page.ScreenConfigPage',
-    '/screens/(\d+)/view/(.+)', 'ictv.pages.screen_renderer.ScreenRenderer',
-    '/screens/(\d+)/client/(.+)', 'ictv.pages.screen_client.ScreenClient',
-    '/screens/(\d+)/subscriptions', 'ictv.pages.screen_subscriptions_page.ScreenSubscriptionsPage',
-    '/screens/redirect/(.+)', 'ictv.pages.screen_router.ScreenRouter',
-    '/buildings', 'ictv.pages.buildings_page.BuildingsPage',
-    '/channels', 'ictv.pages.channels_page.ChannelsPage',
-    '/channels/(\d+)', 'ictv.pages.channel_page.ChannelPage',
-    '/channels/(\d+)/request/(\d+)', 'ictv.pages.channel_page.RequestPage',
-    '/channels/(\d+)/manage_bundle', 'ictv.pages.manage_bundle_page.ManageBundlePage',
-    '/channels/(\d+)/subscriptions', 'ictv.pages.channel_page.SubscribeScreensPage',
-    '/channel/(\d+)','ictv.pages.channel_page.DetailPage',
-    '/channel/(\d+)/force_update','ictv.pages.channel_page.ForceUpdateChannelPage',
-    '/plugins', 'ictv.pages.plugins_page.PluginsPage',
-    '/plugins/(\d+)/config', 'ictv.pages.plugins_page.PluginConfigPage',
-    '/preview/channels/(\d+)/(.+)', 'ictv.pages.channel_renderer.ChannelRenderer',
-    '/renderer/(\d+)', 'ictv.pages.utils.DummyRenderer',
-    '/renderer/(\d+)/capsule/(\d+)', 'ictv.pages.utils.DummyCapsuleRenderer',
-    '/cache/(\d+)', 'ictv.storage.cache_page.CachePage',
-    '/storage', 'ictv.pages.storage_page.StoragePage',
-    '/storage/(\d+)', 'ictv.pages.storage_page.StorageChannel',
-    '/logs', 'ictv.pages.logs_page.LogsPage',
-    '/logs/(.+)', 'ictv.pages.logs_page.ServeLog',
-    '/logas/(.+)', 'ictv.pages.utils.LogAs',
-    '/tour/(started|ended)', 'ictv.pages.utils.TourPage',
-    '/client/ks/(.+)', 'ictv.client.pages.client_pages.Kickstart',
-    '/emails', 'ictv.pages.emails_page.EmailPage',
-    '/transcoding/(.+)/progress', 'ictv.storage.transcoding_page.ProgressPage'
-)
+from ictv.pages.utils import sidebar, urls
+from ictv.flask.mapping import init_flask_url_mapping
 
-sidebar_elements = {
-    'ictv.pages.plugins_page.PluginsPage': {'name': 'Plugins', 'icon': 'fa-plug',
-                                           'rights': UserPermissions.administrator},
-    'ictv.pages.users_page.UsersPage': {'name': 'Users', 'icon': 'fa-users',
-                                       'rights': UserPermissions.administrator},
-    'ictv.pages.buildings_page.BuildingsPage': {'name': 'Buildings', 'icon': 'fa-building-o',
-                                         'rights': UserPermissions.administrator},
-    'ictv.pages.channels_page.ChannelsPage': {'name': 'Channels', 'icon': 'fa-picture-o',
-                                             'rights': UserPermissions.no_permission},
-    'ictv.pages.screens_page.ScreensPage': {'name': 'Screens', 'icon': 'fa-television',
-                                           'rights': UserPermissions.screen_administrator},
-    'ictv.pages.storage_page.StoragePage': {'name': 'Storage', 'icon': 'fa-hdd-o',
-                                            'rights': UserPermissions.super_administrator},
-    'ictv.pages.logs_page.LogsPage': {'name': 'Logs', 'icon': 'fa-history',
-                                      'rights': UserPermissions.super_administrator},
-    'ictv.pages.emails_page.EmailPage': {'name': 'Emails', 'icon': 'fa-envelope',
-                                         'rights': UserPermissions.super_administrator}
-}
-
-# Explicitly set web.py debugging mode to false
-# web.config.debug = False
-
-
-def sidebar(f):
-    """ Utility method providing a simple way to populate the sidebar in function of the user permissions. """
-
-    def get_classes_from_user(user):
-        """ Returns a list as a tuple of the names of classes in the `pages` package accessible to this user. """
-        highest_permission_level = user.highest_permission_level
-        if user.disabled:
-            return ()
-        return (name for name, params in sidebar_elements.items() if params['rights'] in highest_permission_level)
-
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        app = web.ctx.app_stack[0]
-        if 'user' in app.session and 'sidebar' not in app.session:
-            try:
-                u = User.get(app.session['user']['id'])
-                if 'real_user' in app.session:
-                    real_user = User.get(app.session['real_user']['id'])
-                    # if the real user has at least the same right as the "logged as" user
-                    if u.highest_permission_level not in real_user.highest_permission_level:
-                        raise web.seeother('/logas/nobody')
-                user_sidebar = {}
-                for class_name in get_classes_from_user(u):
-                    e = sidebar_elements[class_name]
-                    user_sidebar[e['name']] = {'url': urls[urls.index(class_name) - 1], 'icon': e['icon']}
-                    app.session['sidebar'] = sorted(user_sidebar.items())
-            except SQLObjectNotFound:
-                return f(*args, **kwargs)
-        return f(*args, **kwargs)
-
-    return decorated_function
 
 # TODO find a workaround -  added for transition to jinja
 # cfr screens template for use
@@ -160,14 +73,13 @@ def get_data_edit_object(screen):
     return json.dumps(object)
 
 class IndexPage(ICTVAuthPage):
-    # @sidebar
+    @sidebar
     def get(self):
-        return '<p>hello</p>'
-        # return render_template('home.html',
-        #     base="base.html",
-        #     homepage_description="test",#self.config['homepage_description'], 
-        #     user_disabled=True#User.get(self.session['user']['id']).disabled
-        # )
+        return render_template('home.html',
+            base="base.html",
+            homepage_description=self.config['homepage_description'], 
+            user_disabled=User.get(self.session['user']['id']).disabled
+        )
 
 def get_request_errors_preprocessor(db_logger, pages_logger):
     def request_errors_preprocessor(query):
@@ -229,51 +141,48 @@ def get_authentication_processor(app):
                 return what, [x for x in result.groups()]
         return None, None
 
-    def authentication_processor(handler):
+    def authentication_processor():
         def post_auth():
-            if 'user' in app.session:
-                User.get(id=app.session['user']['id'])
-                app.session.pop('sidebar', None)
-            return handler()
+            if 'user' in session:
+                User.get(id=session['user']['id'])
+                session.pop('sidebar', None)
 
-        class_path, _ = match(app.mapping, web.ctx.path)
-        if class_path:
-            if '.' in class_path:
-                mod, cls = class_path.rsplit('.', 1)
-                mod = __import__(mod, None, None, [''])
-                cls = getattr(mod, cls)
-            else:
-                cls = app.fvars[class_path]
-            if issubclass(cls, ICTVAuthPage):
-                if is_test():
-                    if hasattr(app, 'test_user'):
-                        u = User.selectBy(email=app.test_user['email']).getOne()
-                        app.session['user'] = u.to_dictionary(['id', 'fullname', 'username', 'email'])
-                        return post_auth()
-                    elif 'user' in app.session:
-                        del app.session['user']  # This may not be the ideal way of changing users
-                if app.config['debug']['autologin']:
-                    u = User.selectBy(email='admin@ictv').getOne(None)
-                    if u is not None:
-                        app.session['user'] = u.to_dictionary(['id', 'fullname', 'username', 'email'])
-                        return post_auth()
+        # class_path, _ = match(app.mapping, web.ctx.path)
+        # if class_path:
+        #     if '.' in class_path:
+        #         mod, cls = class_path.rsplit('.', 1)
+        #         mod = __import__(mod, None, None, [''])
+        #         cls = getattr(mod, cls)
+        #     else:
+        #         cls = app.fvars[class_path]
+        #     if issubclass(cls, ICTVAuthPage):
+        #         if is_test():
+        #             if hasattr(app, 'test_user'):
+        #                 u = User.selectBy(email=app.test_user['email']).getOne()
+        #                 app.session['user'] = u.to_dictionary(['id', 'fullname', 'username', 'email'])
+        #                 return post_auth()
+        #             elif 'user' in app.session:
+        #                 del app.session['user']  # This may not be the ideal way of changing users
+        #         if app.config['debug']['autologin']:
+        u = User.selectBy(email='admin@ictv').getOne(None)
+        if u is not None:
+            session['user'] = u.to_dictionary(['id', 'fullname', 'username', 'email'])
+            return post_auth()
 
-                mode = app.config['authentication'][0]  # The first mode is the main authentication mode
-                if mode not in mode_to_processor:
-                    raise Exception('Authentication method "%s" specified in config file is not supported' % app.config[
-                        'authentication'])
-                return mode_to_processor[mode](post_auth)
+                # mode = app.config['authentication'][0]  # The first mode is the main authentication mode
+                # if mode not in mode_to_processor:
+                #     raise Exception('Authentication method "%s" specified in config file is not supported' % app.config[
+                #         'authentication'])
+                # return mode_to_processor[mode](post_auth)
         return post_auth()
 
     return authentication_processor
 
 
-def proxy_web_ctx_processor(handler):
+def proxy_web_ctx_processor():
     web.ctx.host = web.ctx.env.get('HTTP_X_FORWARDED_HOST', web.ctx.host)
     web.ctx.ip = web.ctx.env.get('HTTP_X_FORWARDED_FOR', web.ctx.ip)
     web.ctx.homedomain = '%s://%s' % (web.ctx.protocol, web.ctx.host)
-
-    return handler()
 
 
 def dump_log_stats():
@@ -388,10 +297,6 @@ def get_config(config_path):
         return config_dict
 
     return load_default_slides(config)
-
-class UserAPI(MethodView):
-    def get(self):
-        return f"<p>Hello user</p>"
             
 def get_app(config, sessions_path=""):
     """
@@ -422,8 +327,9 @@ def get_app(config, sessions_path=""):
     # Create a base web.py application
     app = Flask(__name__)
 
-    app.add_url_rule('/', view_func=IndexPage.as_view('index_page'))
-    # app.config = config
+    init_flask_url_mapping(app)
+
+    app.config.update(**config)
 
     app.version = ictv.common.__version__
 
@@ -453,8 +359,8 @@ def get_app(config, sessions_path=""):
                         'str': str, 'sorted': sorted, 'hasattr': hasattr, 'sidebar_collapse': False, 'show_header': True,
                         'show_footer': True, 're': re, 'info': info_texts, 'make_tooltip': make_tooltip,
                         'make_alert': make_alert, 'escape': html.escape,
-                        # 'show_reset_password':  'local' in app.config['authentication'],
-                        # 'homedomain': lambda: web.ctx.homedomain, 'generate_secret': generate_secret,
+                        'show_reset_password':  'local' in app.config['authentication'],
+                        'homedomain': lambda: web.ctx.homedomain, 'generate_secret': generate_secret,
                         'version': lambda: app.version, 'pretty_print_size': pretty_print_size, 'timesince': timesince,
                         'User': User, 'get_user': lambda: User.get(flask.session['user']['id']),
                         'get_data_edit_object': get_data_edit_object}
@@ -510,6 +416,7 @@ def get_app(config, sessions_path=""):
     # app.add_processor(get_request_errors_preprocessor(logging.getLogger('database'), logging.getLogger('pages')))
     # # Add an general authentication processor to handle user authentication
     # app.add_processor(get_authentication_processor(app))
+    app.before_request(get_authentication_processor(app))
     # # Add a hook to clean feedbacks from the previous request and prepare next feedbacks to be shown to the user
     # app.add_processor(web.unloadhook(rotate_feedbacks))
 
@@ -536,10 +443,12 @@ def main(config):
     logger = logging.getLogger('app')
     try:
         app = get_app(config)
-        # if is_test() or app.config['debug']['serve_static']:
-        #     os.chdir(get_root_path())
-        #     if not os.path.exists(os.path.join(get_root_path(), 'sessions')):
-        #         os.mkdir(os.path.join(get_root_path(), 'sessions'))
+        if is_test() or app.config['debug']['serve_static']:
+            cwd = os.getcwd()
+            os.chdir(get_root_path())
+            if not os.path.exists(os.path.join(get_root_path(), 'sessions')):
+                os.mkdir(os.path.join(get_root_path(), 'sessions'))
+            os.chdir(cwd)
         if not is_test():
             address_port = config['address_port'].rsplit(':',1)
             app.run(host=address_port[0], port=address_port[1], debug=config['debug']!=None)
@@ -548,3 +457,4 @@ def main(config):
     except Exception as e:
         logger.error('Exception encountered when starting the application', exc_info=True)
         raise e
+    

@@ -21,6 +21,8 @@
 
 import os
 
+from flask.templating import render_template
+
 from ictv.app import sidebar
 from ictv.common.logging import loggers_stats, get_logger_file_path
 from ictv.pages.utils import ICTVAuthPage, PermissionGate
@@ -31,19 +33,19 @@ from ictv.common import get_root_path
 class LogsPage(ICTVAuthPage):
     @PermissionGate.super_administrator
     @sidebar
-    def GET(self):
+    def get(self):
         for name in loggers_stats:
             try:
                 size = os.path.getsize(os.path.join(get_root_path(), "logs", "%s.log" % name))
             except FileNotFoundError:
                 size = 0
             loggers_stats[name]["size"] = pretty_print_size(size)
-        return self.renderer.logs(loggers_stats=loggers_stats, time_since=timesince)
+        return render_template('logs.html',base='base.html',loggers_stats=loggers_stats, time_since=timesince)
 
 
 class ServeLog(ICTVAuthPage):
     @PermissionGate.super_administrator
-    def GET(self, log_name):
+    def get(self, log_name):
         log_path = get_logger_file_path(log_name)
         if log_path and os.path.exists(log_path):
             with open(log_path, 'r') as f:
