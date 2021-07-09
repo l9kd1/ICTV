@@ -24,6 +24,7 @@ from functools import wraps
 from logging import getLogger
 
 import web
+from flask.views import View
 
 from ictv.models.role import UserPermissions
 from ictv.models.user import User
@@ -35,7 +36,7 @@ from ictv.storage.download_manager import DownloadManager
 from ictv.storage.transcoding_queue import TranscodingQueue
 
 
-class ICTVPage(object):
+class ICTVPage(View):
     """
         A base for all the pages of the ICTV webapp.
         Contains references to the PluginManager, web.py renderer & session, ICTVRenderer,
@@ -114,6 +115,14 @@ class ICTVPage(object):
                 page_url = page_url.replace(match.group(), str(arg))
 
         return page_url
+
+    # Allows using the old syntax with uppercase method attributes
+    def __getattr__(self,name):
+        try:
+            return self.__getattribute__(name.upper())
+        except AttributeError:
+            raise AttributeError("'{}' object has no attribute '{}'".format(self.__class__.__name__,name))
+
 
 
 class ICTVAuthPage(ICTVPage):
