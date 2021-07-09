@@ -303,7 +303,7 @@ def get_config(config_path):
         return config_dict
 
     return load_default_slides(config)
-            
+
 def get_app(config, sessions_path=""):
     """
         Returns the web.py main application of ICTV.
@@ -367,7 +367,7 @@ def get_app(config, sessions_path=""):
                         'show_footer': True, 're': re, 'info': info_texts, 'make_tooltip': make_tooltip,
                         'make_alert': make_alert, 'escape': html.escape,
                         'show_reset_password':  'local' in app.config['authentication'],
-                        'homedomain': lambda: flask.request.homedomain, 'generate_secret': generate_secret,
+                        'homedomain': lambda: "/".join(flask.request.url.split('/')[:3]), 'generate_secret': generate_secret,
                         'version': lambda: app.version, 'pretty_print_size': pretty_print_size, 'timesince': timesince,
                         'User': User, 'get_user': lambda: User.get(app.session['user']['id']),
                         'get_data_edit_object': get_data_edit_object}
@@ -466,4 +466,3 @@ def main(config):
     except Exception as e:
         logger.error('Exception encountered when starting the application', exc_info=True)
         raise e
-    
