@@ -31,7 +31,46 @@ import qrcode.image.svg
 from functools import wraps
 
 import flask
+from sqlobject.main import SQLObjectNotFound
 from ictv.models.role import UserPermissions
+from ictv.models.user import User
+
+
+urls = (
+    '/', 'ictv.app.IndexPage',
+    '/users', 'ictv.pages.users_page.UsersPage',
+    '/users/(\d+)','ictv.pages.users_page.UserDetailPage',
+    '/screens', 'ictv.pages.screens_page.ScreensPage',
+    '/screens/(\d+)', 'ictv.pages.screens_page.DetailPage',
+    '/screens/(\d+)/config', 'ictv.pages.screens_page.ScreenConfigPage',
+    '/screens/(\d+)/view/(.+)', 'ictv.pages.screen_renderer.ScreenRenderer',
+    '/screens/(\d+)/client/(.+)', 'ictv.pages.screen_client.ScreenClient',
+    '/screens/(\d+)/subscriptions', 'ictv.pages.screen_subscriptions_page.ScreenSubscriptionsPage',
+    '/screens/redirect/(.+)', 'ictv.pages.screen_router.ScreenRouter',
+    '/buildings', 'ictv.pages.buildings_page.BuildingsPage',
+    '/channels', 'ictv.pages.channels_page.ChannelsPage',
+    '/channels/(\d+)', 'ictv.pages.channel_page.ChannelPage',
+    '/channels/(\d+)/request/(\d+)', 'ictv.pages.channel_page.RequestPage',
+    '/channels/(\d+)/manage_bundle', 'ictv.pages.manage_bundle_page.ManageBundlePage',
+    '/channels/(\d+)/subscriptions', 'ictv.pages.channel_page.SubscribeScreensPage',
+    '/channel/(\d+)','ictv.pages.channel_page.DetailPage',
+    '/channel/(\d+)/force_update','ictv.pages.channel_page.ForceUpdateChannelPage',
+    '/plugins', 'ictv.pages.plugins_page.PluginsPage',
+    '/plugins/(\d+)/config', 'ictv.pages.plugins_page.PluginConfigPage',
+    '/preview/channels/(\d+)/(.+)', 'ictv.pages.channel_renderer.ChannelRenderer',
+    '/renderer/(\d+)', 'ictv.pages.utils.DummyRenderer',
+    '/renderer/(\d+)/capsule/(\d+)', 'ictv.pages.utils.DummyCapsuleRenderer',
+    '/cache/(\d+)', 'ictv.storage.cache_page.CachePage',
+    '/storage', 'ictv.pages.storage_page.StoragePage',
+    '/storage/(\d+)', 'ictv.pages.storage_page.StorageChannel',
+    '/logs', 'ictv.pages.logs_page.LogsPage',
+    '/logs/(.+)', 'ictv.pages.logs_page.ServeLog',
+    '/logas/(.+)', 'ictv.pages.utils.LogAs',
+    '/tour/(started|ended)', 'ictv.pages.utils.TourPage',
+    '/client/ks/(.+)', 'ictv.client.pages.client_pages.Kickstart',
+    '/emails', 'ictv.pages.emails_page.EmailPage',
+    '/transcoding/(.+)/progress', 'ictv.storage.transcoding_page.ProgressPage'
+)
 
 sidebar_elements = {
     'ictv.pages.plugins_page.PluginsPage': {'name': 'Plugins', 'icon': 'fa-plug',
@@ -52,6 +91,7 @@ sidebar_elements = {
                                          'rights': UserPermissions.super_administrator}
 }
 
+
 def sidebar(f):
     """ Utility method providing a simple way to populate the sidebar in function of the user permissions. """
 
@@ -65,6 +105,8 @@ def sidebar(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         app = flask.current_app
+        app.session = flask.session
+
         if 'user' in app.session and 'sidebar' not in app.session:
             try:
                 u = User.get(app.session['user']['id'])
@@ -72,7 +114,7 @@ def sidebar(f):
                     real_user = User.get(app.session['real_user']['id'])
                     # if the real user has at least the same right as the "logged as" user
                     if u.highest_permission_level not in real_user.highest_permission_level:
-                        raise flask.redirect('/logas/nobody',code=303)
+                        raise flask.redirect('/logas/nobody', code=303)
                 user_sidebar = {}
                 for class_name in get_classes_from_user(u):
                     e = sidebar_elements[class_name]
@@ -83,6 +125,7 @@ def sidebar(f):
         return f(*args, **kwargs)
 
     return decorated_function
+
 
 
 def generate_secret(digits=string.digits):

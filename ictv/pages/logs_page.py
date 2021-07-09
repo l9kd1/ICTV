@@ -21,12 +21,10 @@
 
 import os
 
-from flask.templating import render_template
-
 from ictv.app import sidebar
 from ictv.common.logging import loggers_stats, get_logger_file_path
 from ictv.pages.utils import ICTVAuthPage, PermissionGate
-from ictv.common.utils import timesince, pretty_print_size, sidebar
+from ictv.common.utils import timesince, pretty_print_size
 from ictv.common import get_root_path
 
 
@@ -40,7 +38,7 @@ class LogsPage(ICTVAuthPage):
             except FileNotFoundError:
                 size = 0
             loggers_stats[name]["size"] = pretty_print_size(size)
-        return render_template('logs.html',base='base.html',loggers_stats=loggers_stats, time_since=timesince)
+        return self.renderer.logs(loggers_stats=loggers_stats, time_since=timesince)
 
 
 class ServeLog(ICTVAuthPage):

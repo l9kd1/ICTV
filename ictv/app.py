@@ -49,7 +49,7 @@ from ictv.models.user import User
 from ictv.common.diskstore import OptimisticThreadSafeDisktore
 from ictv.common.feedbacks import rotate_feedbacks, get_feedbacks, pop_previous_form, get_next_feedbacks
 from ictv.common.logging import init_logger, load_loggers_stats
-from ictv.common.utils import make_tooltip, make_alert, generate_secret, pretty_print_size, timesince, is_test, sidebar
+from ictv.common.utils import make_tooltip, make_alert, generate_secret, pretty_print_size, timesince, is_test, sidebar, urls
 from ictv.database import SQLObjectThreadConnection, close_database
 from ictv.pages.utils import ICTVAuthPage, PermissionGate
 from ictv.pages.logs_page import LogsPage
@@ -62,7 +62,6 @@ from ictv.storage.transcoding_queue import TranscodingQueue
 from ictv.common.flask_adaptator import render_jinja, FrankenFlask
 
 
-from ictv.pages.utils import sidebar, urls
 from ictv.flask.mapping import init_flask_url_mapping
 
 
