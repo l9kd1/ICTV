@@ -28,15 +28,15 @@ import sys
 from functools import wraps
 
 import builtins
-# import web
 import yaml
 from sqlobject import SQLObjectNotFound, sqlhub
 from sqlobject.dberrors import DatabaseError
-# from web.py3helpers import string_types
 
 import flask
 from flask import Flask, session
 from flask.views import MethodView
+
+import werkzeug
 
 import ictv
 import ictv.common
@@ -59,7 +59,7 @@ from ictv.storage.cache_manager import CleanupScheduler
 from ictv.storage.download_manager import DownloadManager
 from ictv.storage.transcoding_queue import TranscodingQueue
 
-from ictv.flask.migration_adapter import render_jinja, FrankenFlask, seeother
+from ictv.flask.migration_adapter import render_jinja, FrankenFlask, seeother, Storage
 from ictv.flask.mapping import init_flask_url_mapping
 
 
@@ -78,19 +78,20 @@ class IndexPage(ICTVAuthPage):
         return self.renderer.home(homepage_description=self.config['homepage_description'], user_disabled=User.get(self.session['user']['id']).disabled)
 
 
-def get_request_errors_preprocessor(db_logger, pages_logger):
-    def request_errors_preprocessor(query):
+def get_db_thread_preprocessor():
+    def db_thread_preprocessor():
+        #Avoid processing for static files
+        if '/static/' in flask.request.path:
+            return
         sqlhub.threadConnection = SQLObjectThreadConnection.get_conn()
-        try:
-            return query()
-        except web.HTTPError as e:
-            if type(e) is web.webapi._InternalError:
-                pages_logger.error('An error occured while executing request %s', flask.request.path, exc_info=True)
-            raise
-        except DatabaseError:
-            db_logger.error('An error occured while executing queries for request %s', flask.request.path, exc_info=True)
-            raise
-    return request_errors_preprocessor
+    return db_thread_preprocessor
+
+def database_error_handler(e):
+    logging.getLogger('database').error('An error occured while executing queries for request %s', flask.request.path, exc_info=True)
+
+def internal_error_handler(e):
+    logging.getLogger('pages').error('An error occured while executing request %s', flask.request.path, exc_info=True)
+
 
 
 def load_templates_and_themes():
@@ -98,107 +99,91 @@ def load_templates_and_themes():
     for template in next((os.walk(os.path.join(get_root_path(), 'renderer/templates/'))))[2]:
         Template(name=template.replace('.html', ''))
 
-
 def get_saml_processor(app):
     def saml_processor(handler):
         if 'user' not in app.session:
-            raise seeother('/shibboleth?sso')
-        return handler()
+            flask.abort(seeother('/shibboleth?sso'))
+        handler()
     return saml_processor
 
 
 def get_local_authentication_processor(app):
     def local_authentication_processor(handler):
         if 'user' not in app.session and not flask.request.path.startswith('/login') and not flask.request.path.startswith('/reset'):
-            raise seeother('/login')
-        return handler()
+            flask.abort(seeother('/login'))
+        handler()
     return local_authentication_processor
-
-def auth_proc(app):
-    def intern():
-        u = User.selectBy(email='admin@ictv').getOne(None)
-        if u is not None:
-            app.session['user'] = u.to_dictionary(['id', 'fullname', 'username', 'email'])
-    return intern
 
 
 def get_authentication_processor(app):
     mode_to_processor = {'saml2': get_saml_processor(app), 'local': get_local_authentication_processor(app)}
 
-    def match(mapping, path):
-        """
-            Based on web.py application mapping and a path,
-            returns the corresponding class which should handle the request.
-        """
-        for pat, what in mapping:
-            if isinstance(what, flask.current_app):
-                if path.startswith(pat):
-                    return match(what.mapping, path[len(pat):])
-                else:
-                    continue
-            elif isinstance(what, string_types):
-                what, result = web.utils.re_subm('^' + pat + '$', what, path)
-            else:
-                result = web.utils.re_compile('^' + pat + '$').match(path)
-
-            if result:
-                return what, [x for x in result.groups()]
-        return None, None
-
     def authentication_processor():
+        #Avoid processing for static files
+        if '/static/' in flask.request.path:
+            return
+
         def post_auth():
             if 'user' in app.session:
                 User.get(id=app.session['user']['id'])
                 app.session.pop('sidebar', None)
 
-        class_path, _ = match(app.mapping, flask.request.path)
-        if class_path:
-            if '.' in class_path:
-                mod, cls = class_path.rsplit('.', 1)
-                mod = __import__(mod, None, None, [''])
-                cls = getattr(mod, cls)
-            else:
-                cls = app.fvars[class_path]
-            if issubclass(cls, ICTVAuthPage):
-                if is_test():
-                    if hasattr(app, 'test_user'):
-                        u = User.selectBy(email=app.test_user['email']).getOne()
-                        app.session['user'] = u.to_dictionary(['id', 'fullname', 'username', 'email'])
-                        return post_auth()
-                    elif 'user' in app.session:
-                        del app.session['user']  # This may not be the ideal way of changing users
-                if app.config['debug']['autologin']:
-                    u = User.selectBy(email='admin@ictv').getOne(None)
-                    if u is not None:
-                        app.session['user'] = u.to_dictionary(['id', 'fullname', 'username', 'email'])
-                        return post_auth()
+        urls = app.url_map.bind('')
+        view_func = app.view_functions.get(urls.match(flask.request.path,method=flask.request.method)[0]).__dict__
 
-                mode = app.config['authentication'][0]  # The first mode is the main authentication mode
-                if mode not in mode_to_processor:
-                    raise Exception('Authentication method "%s" specified in config file is not supported' % app.config[
-                        'authentication'])
-                return mode_to_processor[mode](post_auth)
-        return post_auth()
+        if view_func!={} and issubclass(view_func['view_class'], ICTVAuthPage):
+            if is_test():
+                if hasattr(app, 'test_user'):
+                    u = User.selectBy(email=app.test_user['email']).getOne()
+                    app.session['user'] = u.to_dictionary(['id', 'fullname', 'username', 'email'])
+                    return post_auth()
+                elif 'user' in app.session:
+                    del app.session['user']  # This may not be the ideal way of changing users
+            if app.config['debug']['autologin']:
+                u = User.selectBy(email='admin@ictv').getOne(None)
+                if u is not None:
+                    app.session['user'] = u.to_dictionary(['id', 'fullname', 'username', 'email'])
+                    return post_auth()
+
+            mode = app.config['authentication'][0]  # The first mode is the main authentication mode
+
+            if mode not in mode_to_processor:
+                raise Exception('Authentication method "%s" specified in config file is not supported' % app.config[
+                    'authentication'])
+            return mode_to_processor[mode](post_auth)
+        post_auth()
 
     return authentication_processor
 
 
-def proxy_web_ctx_processor():
-    web.ctx.host = web.ctx.env.get('HTTP_X_FORWARDED_HOST', web.ctx.host)
-    web.ctx.ip = web.ctx.env.get('HTTP_X_FORWARDED_FOR', web.ctx.ip)
-    web.ctx.homedomain = '%s://%s' % (web.ctx.protocol, web.ctx.host)
+def web_ctx_processor():
+    """
+        Populate the g variable to mimic the old web.py web.ctx variable
+        using meaningful values when behind a proxy.
+        values available in g are:
+            ["ip","host","homedomain","protocol","query","homepath"]
+
+    """
+
+    if flask.request.headers.getlist("X-Forwarded-For"):
+       flask.g.ip = flask.request.headers.getlist("X-Forwarded-For")[0]
+    else:
+       flask.g.ip = flask.request.remote_addr
+
+    if flask.request.headers.getlist("X-Forwarded-Host"):
+       flask.g.host  = flask.request.headers.getlist("X-Forwarded-Host")[0]
+    else:
+       flask.g.host = flask.request.url.split('/')[2]
+
+    flask.g.homedomain = '%s//%s' % (flask.request.url.split("//")[0], flask.g.host)
+    flask.g.protocol = flask.request.url.split(":")[0]
+    flask.g.query = ("?" if flask.request.query_string.decode()!="" else "")+flask.request.query_string.decode()
+    flask.g.homepath = flask.request.url_root
 
 
 def dump_log_stats():
     from ictv.common.logging import loggers_stats
     LogStat.dump_log_stats(loggers_stats)
-
-
-class DebugEnv(ICTVAuthPage):
-    @PermissionGate.super_administrator
-    def get(self):
-        from pprint import pformat
-        return pformat(flask.request.__dict__) + '\n' + pformat(self.config)
 
 
 if not is_test():  # TODO: Find why this ignores the first SIGINT when placed in ictv-webapp
@@ -304,36 +289,19 @@ def get_config(config_path):
 
 def get_app(config, sessions_path=""):
     """
-        Returns the web.py main application of ICTV.
+        Returns the flask main application of ICTV.
         Currently, only one application can be run a time due to how data such as assets, database, config files
         or plugins is stored.
     """
     if database.database_path is None:
         database.database_path = config['database_uri']
 
-    app_urls = urls
-    if config['debug']['dummy_login']:
-        app_urls += ('/login/(.+)', 'ictv.pages.utils.DummyLogin')
-
-    if config['debug']['debug_env']:
-        app_urls += ('/debug_env', 'DebugEnv')
-
-    if 'local' in config['authentication']:
-        app_urls += ('/login', 'ictv.pages.local_login.LoginPage',
-                     '/reset', 'ictv.pages.local_login.GetResetLink',
-                     '/reset/(.+)', 'ictv.pages.local_login.ResetPage',
-                     '/logout', 'ictv.pages.utils.LogoutPage',)
-
-    if 'saml2' in config['authentication']:
-        app_urls += ('/shibboleth', 'ictv.pages.shibboleth.Shibboleth',
-                     '/shibboleth_metadata', 'ictv.pages.shibboleth.MetadataPage',)
-
-    # Create a base web.py application
+    # Create a base flask application
     app = FrankenFlask(__name__)
 
-    init_flask_url_mapping(app)
-
     app.config.update(**config)
+
+    init_flask_url_mapping(app)
 
     app.version = ictv.common.__version__
 
@@ -409,25 +377,21 @@ def get_app(config, sessions_path=""):
     # Init the video transcoding queue which will convert videos to WebM format using FFmpeg
     app.transcoding_queue = TranscodingQueue()
 
-    app.before_request(auth_proc(app))
+    # Add an general authentication processor to handle user authentication
+    app.before_request(get_authentication_processor(app))
+
+    # Add a preprocessor to populate flask.g and mimic the old web.ctx
+    app.before_request(web_ctx_processor)
+
+    # Add a preprocessor to encapsulate every SQL requests in a transaction on a per HTTP request basis
+    app.before_request(get_db_thread_preprocessor())
+    app.register_error_handler(DatabaseError,database_error_handler)
+    app.register_error_handler(werkzeug.exceptions.InternalServerError,internal_error_handler)
+
+    # Add a hook to clean feedbacks from the previous request and prepare next feedbacks to be shown to the user
+    app.after_request(rotate_feedbacks)
 
     """
-    # Add an hook to make session available through flask.request for plugin webapps
-    def session_hook():
-        flask.request.session = app.session
-        web.template.Template.globals['session'] = app.session
-
-    app.add_processor(web.loadhook(session_hook))
-
-    # Add a preprocessor to populate web.ctx with meaningful values when app is run behind a proxy
-    app.add_processor(proxy_web_ctx_processor)
-    # Add a preprocessor to encapsulate every SQL requests in a transaction on a per HTTP request basis
-    app.add_processor(get_request_errors_preprocessor(logging.getLogger('database'), logging.getLogger('pages')))
-    # Add an general authentication processor to handle user authentication
-    app.add_processor(get_authentication_processor(app))
-    # Add a hook to clean feedbacks from the previous request and prepare next feedbacks to be shown to the user
-    app.add_processor(web.unloadhook(rotate_feedbacks))
-
     # Instantiate plugins through the plugin manager
     app.plugin_manager.instantiate_plugins(app)
    """

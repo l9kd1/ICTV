@@ -97,7 +97,7 @@ class ICTVPage(MethodView):
     def version(self):
         """ Returns the ICTV version. """
         return self.app.version
-    
+
     @property
     def form(self) -> Storage:
         """ Returns the request form. """
@@ -194,14 +194,14 @@ class DummyCapsuleRenderer(ICTVAuthPage):  # TODO: Move this to editor/app.py
 
 class LogoutPage(ICTVAuthPage):
     def post(self):
-        self.session.kill()
-        return web.seeother('/')
+        self.session.clear()
+        return self.seeother('/')
 
 
 class TourPage(ICTVAuthPage):
     def post(self, status):
         User.get(self.session['user']['id']).has_toured = status == 'ended'
-        raise web.seeother(web.ctx.env.get('HTTP_REFERER', '/'))
+        return seeother(flask.request.environ.get('HTTP_REFERER', '/'))
 
 
 class PermissionGateMeta(type):
@@ -244,3 +244,9 @@ class PermissionGateMeta(type):
 class PermissionGate(object, metaclass=PermissionGateMeta):
     """ Utility class automatically filled by PermissionGateMeta. """
     pass
+
+class DebugEnv(ICTVAuthPage):
+    @PermissionGate.super_administrator
+    def get(self):
+        from pprint import pformat
+        return pformat(flask.request.__dict__) + '\n' + pformat(self.config)

@@ -23,6 +23,7 @@ import hashlib
 from logging import getLogger
 
 import web
+import flask
 from ictv.common import utils
 
 from ictv.models.user import User
@@ -54,7 +55,7 @@ class LoginPage(ICTVPage):
         return web.seeother('/')
 
     def render_page(self):
-        return self.standalone_renderer.login(self.config['authentication'], self.config['saml2']['display_name'])
+        return self.standalone_renderer.login(mode=self.config['authentication'], saml2_display_name=self.config['saml2']['display_name'])
 
 
 class GetResetLink(ICTVAuthPage):
@@ -69,7 +70,7 @@ class ResetPage(ICTVPage):
     def get(self, secret):
         user = User.selectBy(reset_secret=secret).getOne(None)
         if not user:
-            logger.warning('IP %s tried to access password reset page with invalid secret', web.ctx.ip)
+            logger.warning('IP %s tried to access password reset page with invalid secret', flask.request.remote_addr)
             if 'user' in self.session:
                 logger.warning('User %s is currently connected', User.get(self.session['user']['id']).log_name)
             raise web.redirect('/')
@@ -86,7 +87,7 @@ class ResetPage(ICTVPage):
                 raise ImmediateFeedback('reset', 'password_insufficient')
             user.password = hash_password(form.password1)
             user.reset_secret = utils.generate_secret()  # Make this token one time use
-            logger.info('User %s has reset its password from IP %s', user.log_name, web.ctx.ip)
+            logger.info('User %s has reset its password from IP %s', user.log_name, flask.g.ip)
         except ImmediateFeedback:
             return self.standalone_renderer.reset(user=user)
         add_feedback('reset', 'ok')

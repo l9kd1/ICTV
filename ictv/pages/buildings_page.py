@@ -22,6 +22,7 @@
 import flask
 from sqlobject import SQLObjectNotFound
 from sqlobject.dberrors import DuplicateEntryError
+from sqlobject.dberrors import DatabaseError
 
 import logging
 

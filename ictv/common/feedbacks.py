@@ -23,7 +23,7 @@ import flask
 
 def get_feedbacks():
     """ Returns feedbacks available for this request. """
-    return Feedbacks(flask.session.get('feedbacks', []))
+    return Feedbacks(flask.session.__dict__.get('feedbacks', []))
 
 
 def get_next_feedbacks():
@@ -31,18 +31,23 @@ def get_next_feedbacks():
         Returns feedbacks available for the next request.
         This is implemented for compatibility reasons until all pages implement a Post/Redirect/Get pattern.
     """
-    return Feedbacks(flask.session.get('next_request_feedbacks', []))
+    return Feedbacks(flask.session.__dict__.get('next_request_feedbacks', []))
 
 
 def add_feedback(type, message, value=None):
-    feedbacks = flask.session.get('next_request_feedbacks', [])
+    feedbacks = flask.session.__dict__.get('next_request_feedbacks', [])
     feedbacks.append({'type': type, 'message': message, 'value': value})
     flask.session.next_request_feedbacks = feedbacks
 
 
-def rotate_feedbacks():
-    flask.session.feedbacks = flask.session.get('next_request_feedbacks', [])
+def rotate_feedbacks(res):
+    # Avoid processing for static files
+    if '/static/' in flask.request.path:
+      return res
+
+    flask.session.feedbacks = flask.session.__dict__.get('next_request_feedbacks', [])
     flask.session.next_request_feedbacks = []
+    return res
 
 
 class Feedbacks(list):

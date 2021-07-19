@@ -31,7 +31,7 @@ def build_settings(settings):
     """
         Build the SAML2 configuration from the app config.
 
-        Note for later : 
+        Note for later :
             The best would be to include this directly into the ICTVPage class?
             That would allow to call this method only once at boot time.
             Maybe there should be a mechanism that allowed this kind of
@@ -64,15 +64,15 @@ def prepare_request():
     # If server is behind proxys or balancers use the HTTP_X_FORWARDED fields
     data = web.input()
     return {
-        'https': 'on' if web.ctx.protocol == 'https' else 'off',
-        'http_host': web.ctx.environ["SERVER_NAME"],
-        'server_port': web.ctx.environ["SERVER_PORT"],
-        'script_name': web.ctx.homepath,
+        'https': 'on' if flask.g.protocol == 'https' else 'off',
+        'http_host': flask.request.environ["SERVER_NAME"],
+        'server_port': flask.request.environ["SERVER_PORT"],
+        'script_name': flask.g.homepath,
         'get_data': data.copy(),
         'post_data': data.copy(),
         # Uncomment if using ADFS as IdP, https://github.com/onelogin/python-saml/pull/144
         # 'lowercase_urlencoding': True,
-        'query_string': web.ctx.query
+        'query_string': flask.g.query
     }
 
 

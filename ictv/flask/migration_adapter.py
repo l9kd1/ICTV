@@ -4,6 +4,9 @@ from flask import Flask, session
 def forbidden(message=None):
     return flask.make_response(message, code=403)
 
+def notfound(message=None):
+    return flask.make_response(message, code=403)
+
 def seeother(url):
     return flask.redirect(url, code=303)
 # Allows the use of the old rendering syntax previously used in web.py
