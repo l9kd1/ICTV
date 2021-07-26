@@ -63,15 +63,6 @@ from ictv.flask.migration_adapter import render_jinja, FrankenFlask, seeother, S
 from ictv.flask.mapping import init_flask_url_mapping
 
 
-# TODO find a workaround -  added for transition to jinja
-# cfr screens template for use
-def get_data_edit_object(screen):
-    object = screen.to_dictionary(['name', 'comment', 'location'])
-    object['screenid'] = screen.id
-    object['mac'] = screen.get_macs_string() if screen.macs is not None else ''
-    object['building-name'] = screen.building.name
-    return json.dumps(object)
-
 class IndexPage(ICTVAuthPage):
     @sidebar
     def get(self):
@@ -335,8 +326,7 @@ def get_app(config, sessions_path=""):
                         'show_reset_password':  'local' in app.config['authentication'],
                         'homedomain': lambda: "/".join(flask.request.url.split('/')[:3]), 'generate_secret': generate_secret,
                         'version': lambda: app.version, 'pretty_print_size': pretty_print_size, 'timesince': timesince,
-                        'User': User, 'get_user': lambda: User.get(app.session['user']['id']),
-                        'get_data_edit_object': get_data_edit_object}
+                        'User': User, 'get_user': lambda: User.get(app.session['user']['id'])}
     # Init the web.py renderer used for the admin interface
     template_kwargs = {'loc': os.path.join(get_root_path(), 'templates/'),
                        'cache': not app.config['debug']['debug_on_error'],
