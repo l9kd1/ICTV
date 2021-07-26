@@ -26,7 +26,7 @@ from logging import getLogger
 import flask
 from flask.views import MethodView
 
-from ictv.flask.migration_adapter import Storage, forbidden, seeother
+from ictv.flask.migration_adapter import Storage
 from ictv.models.role import UserPermissions
 from ictv.models.user import User
 from ictv.plugin_manager.plugin_manager import PluginManager
@@ -35,6 +35,9 @@ from ictv.renderer.renderer import ICTVRenderer
 from ictv.storage.cache_manager import CleanupScheduler
 from ictv.storage.download_manager import DownloadManager
 from ictv.storage.transcoding_queue import TranscodingQueue
+
+import ictv.flask.response as resp
+
 
 class ICTVPage(MethodView):
     """
@@ -103,12 +106,6 @@ class ICTVPage(MethodView):
         """ Returns the request form. """
         return Storage(flask.request.form)
 
-    def forbidden(self, message=None):
-        return forbidden(message)
-
-    def seeother(self, url):
-        return seeother(url)
-
     def url_for(self, page_class, *args):
         """ Returns an URL filled with the given arguments to the given page. """
         page_path = page_class.__module__ + '.' + page_class.__qualname__
@@ -141,7 +138,7 @@ class DummyLogin(ICTVPage):
             self.session['user'] = u.to_dictionary(['id', 'fullname', 'email'])
             if 'sidebar' in self.session:
                 self.session.pop('sidebar')
-        raise web.seeother('/')
+        raise resp.seeother('/')
 
 
 class DummyRenderer(ICTVAuthPage):
@@ -169,15 +166,15 @@ class LogAs(ICTVAuthPage):
                     self.session['user'] = u.to_dictionary(['id', 'fullname', 'email'])
                     self.logger.info('the super_administrator %s has been logged as %s',
                                      real_user.log_name, u.log_name)
-                    raise web.seeother('/')
+                    raise resp.seeother('/')
                 else:
-                    raise web.forbidden()
+                    raise resp.forbidden()
 
         if target_user == 'nobody':
             if 'real_user' in self.session:
                 self.session['user'] = self.session['real_user']
                 self.session.pop('real_user')
-            raise web.seeother('/')
+            raise resp.seeother('/')
         log_as()
 
         return "the user " + target_user + " does not exist"
@@ -195,13 +192,13 @@ class DummyCapsuleRenderer(ICTVAuthPage):  # TODO: Move this to editor/app.py
 class LogoutPage(ICTVAuthPage):
     def post(self):
         self.session.clear()
-        return self.seeother('/')
+        return resp.seeother('/')
 
 
 class TourPage(ICTVAuthPage):
     def post(self, status):
         User.get(self.session['user']['id']).has_toured = status == 'ended'
-        return seeother(flask.request.environ.get('HTTP_REFERER', '/'))
+        return resp.seeother(flask.request.environ.get('HTTP_REFERER', '/'))
 
 
 class PermissionGateMeta(type):
@@ -231,10 +228,10 @@ class PermissionGateMeta(type):
                         real_user = User.get(app.session['real_user']['id'])
                         # if the real user has at least the same right as the "logged as" user
                         if u.highest_permission_level not in real_user.highest_permission_level:
-                            raise web.seeother('/logas/nobody')
+                            raise resp.seeother('/logas/nobody')
                     if permission_level in u.highest_permission_level:
                         return f(*args, **kwargs)
-                    raise web.forbidden()
+                    raise resp.forbidden()
 
             return decorated_function
 

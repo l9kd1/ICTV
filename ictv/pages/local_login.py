@@ -30,18 +30,21 @@ from ictv.models.user import User
 from ictv.common.feedbacks import ImmediateFeedback, add_feedback, store_form
 from ictv.pages.utils import ICTVPage, PermissionGate, ICTVAuthPage
 
+import ictv.flask.response as resp
+
+
 logger = getLogger('local_login')
 
 
 class LoginPage(ICTVPage):
     def get(self):
         if 'user' in self.session:
-            raise web.seeother('/')
+            raise resp.seeother('/')
         return self.render_page()
 
     def post(self):
         if 'user' in self.session:
-            raise web.seeother('/')
+            raise resp.seeother('/')
         form = web.input()
         try:
             user = User.selectBy(email=form.email, password=hash_password(form.password)).getOne(None)
@@ -52,7 +55,7 @@ class LoginPage(ICTVPage):
             store_form(form)
             return self.render_page()
 
-        return web.seeother('/')
+        return resp.seeother('/')
 
     def render_page(self):
         return self.standalone_renderer.login(mode=self.config['authentication'], saml2_display_name=self.config['saml2']['display_name'])
@@ -63,7 +66,7 @@ class GetResetLink(ICTVAuthPage):
         user = User.get(self.session['user']['id'])
         user.reset_secret = utils.generate_secret()
         logger.info('User %s requested a new password reset link', user.log_name)
-        raise web.seeother(self.url_for(ResetPage, user.reset_secret))
+        raise resp.seeother(self.url_for(ResetPage, user.reset_secret))
 
 
 class ResetPage(ICTVPage):
@@ -91,7 +94,7 @@ class ResetPage(ICTVPage):
         except ImmediateFeedback:
             return self.standalone_renderer.reset(user=user)
         add_feedback('reset', 'ok')
-        raise web.seeother(self.url_for(LoginPage))
+        raise resp.seeother(self.url_for(LoginPage))
 
 
 def hash_password(password):

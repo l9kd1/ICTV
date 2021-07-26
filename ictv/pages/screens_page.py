@@ -35,6 +35,7 @@ from ictv.app import sidebar
 from ictv.common.feedbacks import add_feedback, ImmediateFeedback, store_form
 from ictv.pages.utils import ICTVAuthPage, PermissionGate
 
+import ictv.flask.response as resp
 
 class ScreenConfigPage(ICTVAuthPage):
 
@@ -45,7 +46,7 @@ class ScreenConfigPage(ICTVAuthPage):
             sc = Screen.get(id)
             return self.render_page(sc)
         except (SQLObjectNotFound, ValueError):
-            raise web.seeother('/screens')
+            raise resp.seeother('/screens')
 
     @sidebar
     def render_page(self, screen):
@@ -61,7 +62,7 @@ class DetailPage(ICTVAuthPage):
             sc = Screen.get(id)
             return self.render_page(sc)
         except (SQLObjectNotFound, ValueError):
-            raise web.seeother('/screens')
+            raise resp.seeother('/screens')
 
     @sidebar
     def render_page(self,screen):
@@ -125,7 +126,7 @@ class ScreensPage(ICTVAuthPage):
         try:
             if form.action == 'delete':
                 if not u.super_admin:
-                    raise web.forbidden()
+                    raise resp.forbidden()
                 try:
                     screenid = int(form.screenid)
                 except ValueError:
@@ -159,10 +160,10 @@ class ScreensPage(ICTVAuthPage):
                         channel = Channel.get(channelid)
                         screen = Screen.get(screenid)
                         if UserPermissions.administrator not in u.highest_permission_level and not (channel.can_subscribe(u) and u in screen.owners):
-                            raise web.forbidden()
+                            raise resp.forbidden()
                         if sub:
                             if hasattr(channel, "plugin") and channel.plugin.activated != 'yes':
-                                raise web.forbidden()
+                                raise resp.forbidden()
                             screen.subscribe_to(user=u, channel=channel)
                         else:
                             screen.unsubscribe_from(user=u, channel=channel)
@@ -199,7 +200,7 @@ class ScreensPage(ICTVAuthPage):
                     try:
                         screen = Screen.get(screenid)
                         if UserPermissions.administrator not in u.highest_permission_level and u not in screen.owners:
-                            raise web.forbidden()
+                            raise resp.forbidden()
                         user = User.get(userid)
                         if own:
                             screen.safe_add_user(user)
@@ -239,7 +240,7 @@ class ScreensPage(ICTVAuthPage):
 
                 if form.action == 'create':
                     if UserPermissions.administrator not in u.highest_permission_level:
-                        raise web.forbidden()
+                        raise resp.forbidden()
                     try:
                         screen = Screen(name=form.name.strip(), building=form.building, location=form.location.strip(), comment= form.comment.strip(), orientation= form.orientation)
                     except DuplicateEntryError:
@@ -247,7 +248,7 @@ class ScreensPage(ICTVAuthPage):
 
                 elif form.action == 'edit':
                     if UserPermissions.administrator not in u.highest_permission_level:
-                        raise web.forbidden()
+                        raise resp.forbidden()
                     try:
                         screenid = int(form.screenid)
                     except ValueError:

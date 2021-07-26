@@ -34,6 +34,9 @@ import logging
 from ictv.common.feedbacks import ImmediateFeedback, add_feedback, store_form
 from ictv.pages.utils import ICTVAuthPage, PermissionGate
 
+import ictv.flask.response as resp
+
+
 logger = logging.getLogger('pages')
 
 
@@ -57,7 +60,7 @@ class ManageBundlePage(ICTVAuthPage):
             bundle = ChannelBundle.get(bundle_id)
             u = User.get(self.session['user']['id'])
         except SQLObjectNotFound:
-            raise web.notfound()
+            raise resp.notfound()
         return self.render_page(bundle, u)
 
     @PermissionGate.administrator
@@ -82,7 +85,7 @@ class ManageBundlePage(ICTVAuthPage):
             except SQLObjectNotFound:
                 logger.warning('user %s tried to add a channel which does not exist to bundle %d',
                                u.log_name, bundle.id)
-                raise web.forbidden()
+                raise resp.forbidden()
             # if somebody tries to add a channel with a disabled plugin or to add a bundle to itself
             wrong_channels = [(channel, add) for channel, add in changes if wrong_channel(channel, bundle, add)]
             if wrong_channels:
@@ -120,8 +123,8 @@ class ManageBundlePage(ICTVAuthPage):
             logger.info(message)
             add_feedback("manage_channels", 'ok')
         except SQLObjectNotFound:
-            raise web.notfound()
+            raise resp.notfound()
         except ImmediateFeedback:
             pass
         store_form(form)
-        raise web.seeother("/channels/%s/manage_bundle" % bundle.id)
+        raise resp.seeother("/channels/%s/manage_bundle" % bundle.id)

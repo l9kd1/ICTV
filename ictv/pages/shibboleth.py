@@ -26,6 +26,8 @@ from onelogin.saml2.utils import OneLogin_Saml2_Utils
 from ictv.models.user import User
 from ictv.pages.utils import ICTVPage
 
+import ictv.flask.response as resp
+
 
 def build_settings(settings):
     """
@@ -105,9 +107,9 @@ class Shibboleth(ICTVPage):
         input_data = web.input()
 
         if 'sso' in input_data:
-            raise web.seeother(auth.login())
+            raise resp.seeother(auth.login())
 
-        raise web.seeother('/')
+        raise resp.seeother('/')
 
     def post(self):
         """
@@ -158,6 +160,6 @@ class Shibboleth(ICTVPage):
 
                 self_url = OneLogin_Saml2_Utils.get_self_url(req)
                 if 'RelayState' in input_data and self_url != input_data['RelayState']:
-                    raise web.seeother(auth.redirect_to(input_data['RelayState']))
+                    raise resp.seeother(auth.redirect_to(input_data['RelayState']))
 
-        raise web.seeother('/')
+        raise resp.seeother('/')

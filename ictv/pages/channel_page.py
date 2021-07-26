@@ -41,6 +41,9 @@ from ictv.common.feedbacks import ImmediateFeedback, add_feedback, store_form
 from ictv.plugin_manager.plugin_utils import ChannelGate
 from ictv.renderer.renderer import Templates
 
+import ictv.flask.response as resp
+
+
 logger = logging.getLogger('pages')
 
 
@@ -76,7 +79,7 @@ class DetailPage(ICTVAuthPage):
         form.channel_id = channel_id
         form.name = channel.name
         store_form(form)
-        raise self.seeother('/channels')
+        raise resp.seeother('/channels')
 
     @sidebar
     def render_page(self, channel):
@@ -181,14 +184,14 @@ class SubscribeScreensPage(ICTVAuthPage):
             except SQLObjectIntegrityError:
                 # when there id more than one subscription matching the pair channel/screen
                 pass
-        raise self.seeother("/channels/%s/subscriptions" % channel_id)
+        raise resp.seeother("/channels/%s/subscriptions" % channel_id)
 
 
 class ForceUpdateChannelPage(ICTVAuthPage):
     @ChannelGate.contributor
     def get(self, channel_id, channel):
         self.plugin_manager.invalidate_cache(channel.plugin.name, channel.id)
-        raise self.seeother('/channel/%d' % channel.id)
+        raise resp.seeother('/channel/%d' % channel.id)
 
 
 class RequestPage(ICTVAuthPage):
@@ -201,7 +204,7 @@ class RequestPage(ICTVAuthPage):
         st = "You just receive a request of subscription for channel " + chan.name + ". Could you please subscribe " + str(user.fullname) + " (" + user.email + ") to this channel."
         for admin in chan.get_admins():
             web.sendmail(web.config.smtp_sendername, admin.email, 'Request for subscription to a channel', st, headers={'Content-Type': 'text/html;charset=utf-8'})
-        return self.seeother('/channels')
+        return resp.seeother('/channels')
 
 
 class ChannelPage(ICTVAuthPage):
@@ -261,7 +264,7 @@ class ChannelPage(ICTVAuthPage):
             if channel is not None and channel.enabled:
                 form.enabled = 'on'
         store_form(form)
-        raise self.seeother('/channels/%d' % channel.id)
+        raise resp.seeother('/channels/%d' % channel.id)
 
     @sidebar
     def render_page(self, channel):

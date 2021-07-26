@@ -59,7 +59,9 @@ from ictv.storage.cache_manager import CleanupScheduler
 from ictv.storage.download_manager import DownloadManager
 from ictv.storage.transcoding_queue import TranscodingQueue
 
-from ictv.flask.migration_adapter import render_jinja, FrankenFlask, seeother, Storage
+from ictv.flask.migration_adapter import render_jinja, FrankenFlask
+import ictv.flask.response as resp
+
 from ictv.flask.mapping import init_flask_url_mapping
 
 
@@ -93,7 +95,7 @@ def load_templates_and_themes():
 def get_saml_processor(app):
     def saml_processor(handler):
         if 'user' not in app.session:
-            flask.abort(seeother('/shibboleth?sso'))
+            flask.abort(resp.seeother('/shibboleth?sso'))
         handler()
     return saml_processor
 
@@ -101,7 +103,7 @@ def get_saml_processor(app):
 def get_local_authentication_processor(app):
     def local_authentication_processor(handler):
         if 'user' not in app.session and not flask.request.path.startswith('/login') and not flask.request.path.startswith('/reset'):
-            flask.abort(seeother('/login'))
+            flask.abort(resp.seeother('/login'))
         handler()
     return local_authentication_processor
 
@@ -381,10 +383,9 @@ def get_app(config, sessions_path=""):
     # Add a hook to clean feedbacks from the previous request and prepare next feedbacks to be shown to the user
     app.after_request(rotate_feedbacks)
 
-    """
     # Instantiate plugins through the plugin manager
     app.plugin_manager.instantiate_plugins(app)
-   """
+
     # Load themes and templates into database
     sqlhub.doInTransaction(load_templates_and_themes)
 

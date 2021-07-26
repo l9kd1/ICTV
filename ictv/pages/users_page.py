@@ -31,6 +31,8 @@ from ictv.common.utils import sidebar
 from ictv.common.feedbacks import add_feedback, ImmediateFeedback, store_form
 from ictv.pages.utils import ICTVAuthPage, PermissionGate
 
+import ictv.flask.response as resp
+
 
 class UserDetailPage(ICTVAuthPage):
     def get(self, id):
@@ -38,10 +40,10 @@ class UserDetailPage(ICTVAuthPage):
             id = int(id)
             u = User.get(id)
             if id != self.session['user']['id'] and UserPermissions.administrator not in User.get(self.session['user']['id']).highest_permission_level:
-                raise web.forbidden()
+                raise resp.forbidden()
             return self.render_page(u)
         except (SQLObjectNotFound, ValueError):
-            raise web.seeother('/users')
+            raise resp.seeother('/users')
 
     @sidebar
     def render_page(self, user):
@@ -113,7 +115,7 @@ class UsersPage(ICTVAuthPage):
                         raise ImmediateFeedback(form.action, 'too_long_email')
                     if not current_user.super_admin:
                         if u.super_admin:
-                            raise web.forbidden()
+                            raise resp.forbidden()
                     else:
                         if self.session['user']['id'] != form.id:
                             u.set(super_admin=super_admin, admin=admin)
@@ -121,7 +123,7 @@ class UsersPage(ICTVAuthPage):
                     raise ImmediateFeedback(form.action, 'invalid_id')
             elif form.action == 'toggle-activation':
                 if not current_user.super_admin:
-                    raise web.forbidden()
+                    raise resp.forbidden()
                 try:
                     form.id = int(form.id)
                     u = User.get(form.id)
@@ -134,7 +136,7 @@ class UsersPage(ICTVAuthPage):
         except ImmediateFeedback:
             pass
         store_form(form)
-        raise web.seeother('/users')
+        raise resp.seeother('/users')
 
     @sidebar
     def render_page(self):

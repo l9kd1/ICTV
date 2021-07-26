@@ -36,6 +36,9 @@ from ictv.common.feedbacks import add_feedback, ImmediateFeedback, store_form
 from ictv.pages.utils import ICTVAuthPage, PermissionGate
 from ictv.plugin_manager.plugin_utils import MisconfiguredParameters
 
+import ictv.flask.response as resp
+
+
 logger = logging.getLogger('pages')
 
 
@@ -84,7 +87,7 @@ class ChannelsPage(ICTVAuthPage):
                         channel = ChannelBundle(name=name, description=description, subscription_right=form.subscription_right,
                                           enabled=enabled)
                     else:
-                        raise web.badrequest()
+                        raise resp.badrequest()
                 except SQLObjectNotFound:
                     raise ImmediateFeedback(form.action, 'invalid_plugin')
                 except DuplicateEntryError:
@@ -117,7 +120,7 @@ class ChannelsPage(ICTVAuthPage):
                 elif form.action == 'edit-bundle':
                     pass  # There is nothing more to edit for a bundle than a channel
                 else:
-                    raise web.badrequest()
+                    raise resp.badrequest()
 
                 try:
                     channel.set(**new_state)
@@ -155,7 +158,7 @@ class ChannelsPage(ICTVAuthPage):
             elif form.action == 'add-users-channel':
                 try:
                     if 'users' not in form:
-                        raise web.badrequest()
+                        raise resp.badrequest()
                     form.users = json.loads(form.users)
                     form.id = int(form.id)
                     channel = PluginChannel.get(form.id)
@@ -261,12 +264,12 @@ class ChannelsPage(ICTVAuthPage):
                         except MisconfiguredParameters as e:
                             for faulty_param in e:
                                 add_feedback(form.action, faulty_param[0], faulty_param)
-                            raise web.seeother('/channels/%d' % channel.id)
+                            raise resp.seeother('/channels/%d' % channel.id)
                         except Exception as e:
                             add_feedback(form.action, 'general_error', str(e))
-                            raise web.seeother('/channels/%d' % channel.id)
+                            raise resp.seeother('/channels/%d' % channel.id)
                     else:
-                        raise web.forbidden()
+                        raise resp.forbidden()
                     form.name = channel.name
                 except (SQLObjectNotFound, ValueError):
                     raise ImmediateFeedback(form.action, 'invalid_id')

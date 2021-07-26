@@ -23,7 +23,6 @@ import re
 from abc import ABCMeta
 from functools import wraps
 
-import web
 from pymediainfo import MediaInfo
 from sqlobject import declarative
 
@@ -34,6 +33,8 @@ from ictv.models.user import User
 from ictv.plugin_manager.plugin_slide import PluginSlide
 from ictv.renderer.renderer import Templates
 
+import flask
+import ictv.flask.response as resp
 
 class ChannelGate(object):
     """
@@ -57,7 +58,7 @@ def webapp_decorator(func, permission_level):
     """
     This decorator wraps a web.py page function and verify that the current user has sufficient permissions to access
     the PluginChannel web application. The channel object is passed to the page as the ``channel`` parameter.
-    If no sufficient permission are found, web.forbidden() is raised.
+    If no sufficient permission are found, resp.forbidden() is raised.
     
     :param func: the web.py page function
     :param permission_level: the minimum permission level needed
@@ -66,23 +67,21 @@ def webapp_decorator(func, permission_level):
 
     @wraps(func)
     def wrapper(*args, **kwargs):
-        app = web.ctx.app_stack[0]
-        if len(web.ctx.homepath) > 0:  # We are in a sub-app
-            channelid = re.findall(r'\d+', web.ctx.homepath)[0]
-        else:  # We are in the core app
-            channelid = re.findall(r'\d+', web.ctx.path)[0]
+        app = flask.current_app
+
+        channelid = re.findall(r'\d+', flask.request.path)[0]
         channel = PluginChannel.get(channelid)
         u = User.get(app.session['user']['id'])
         if 'real_user' in app.session:
             real_user = User.get(app.session['real_user']['id'])
             # if the real user has at least the same right as the "logged as" user
             if u.highest_permission_level not in real_user.highest_permission_level:
-                raise web.seeother('/logas/nobody')
+                raise resp.seeother('/logas/nobody')
         if UserPermissions.administrator in u.highest_permission_level or permission_level in channel.get_channel_permissions_of(u):
             kwargs['channel'] = channel
             return func(*args, **kwargs)
         else:
-            raise web.forbidden()
+            raise resp.forbidden()
 
     return wrapper
 

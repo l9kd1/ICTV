@@ -25,6 +25,7 @@ from sqlobject import SQLObjectNotFound
 from ictv.models.screen import ScreenMac
 from ictv.pages.utils import ICTVPage
 
+import ictv.flask.response as resp
 
 class ScreenRouter(ICTVPage):
     def get(self, mac):
@@ -32,5 +33,5 @@ class ScreenRouter(ICTVPage):
         try:
             screen = ScreenMac.selectBy(mac=mac).getOne().screen
         except SQLObjectNotFound:
-            raise web.notfound()
-        raise web.seeother(screen.get_view_link())
+            raise resp.notfound()
+        raise resp.seeother(screen.get_view_link())

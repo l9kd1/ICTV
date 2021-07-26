@@ -25,6 +25,7 @@ from sqlobject import SQLObjectNotFound
 from ictv.models.asset import Asset
 from ictv.pages.utils import ICTVPage
 
+import ictv.flask.response as resp
 
 class CachePage(ICTVPage):
     def get(self, asset_id):
@@ -34,8 +35,8 @@ class CachePage(ICTVPage):
             if self.download_manager.has_pending_task_for_asset(asset_id):
                 task = self.download_manager.get_pending_task_for_asset(asset_id)
                 task.result()
-            raise web.seeother('/' + Asset.get(asset_id)._get_path(force=True))  # Task is complete but asset may be still marked as in flight
+            raise resp.seeother('/' + Asset.get(asset_id)._get_path(force=True))  # Task is complete but asset may be still marked as in flight
         except SQLObjectNotFound:
-            raise web.notfound()
+            raise resp.notfound()
         except KeyError:
-            raise web.seeother('/cache/' + str(asset_id))
+            raise resp.seeother('/cache/' + str(asset_id))

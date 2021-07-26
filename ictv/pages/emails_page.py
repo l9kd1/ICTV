@@ -35,6 +35,9 @@ from ictv.models.user import User
 from ictv.app import sidebar
 from ictv.pages.utils import PermissionGate, ICTVAuthPage
 
+import ictv.flask.response as resp
+
+
 logger = logging.getLogger('pages')
 
 
@@ -76,4 +79,4 @@ class EmailPage(ICTVAuthPage):
                              headers={'Content-Type': 'text/html;charset=utf-8'})
         except smtplib.SMTPException:
             logger.error('An error occured when sending email ', exc_info=True)
-        return web.seeother("/")
+        return resp.seeother("/")
