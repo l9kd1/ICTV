@@ -239,3 +239,7 @@ def pretty_print_size(byte_size):
 
 def is_test():
     return os.environ.get('WEBPY_ENV') == 'test'
+
+def get_methods(elem):
+    http_methods = ["GET","POST","DELETE","PUT","HEAD","CONNECT","OPTIONS","TRACE","PATCH"]
+    return [m for m in http_methods if elem.__dict__.get(m.lower())!=None]

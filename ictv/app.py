@@ -123,7 +123,6 @@ def get_authentication_processor(app):
 
         urls = app.url_map.bind('')
         view_func = app.view_functions.get(urls.match(flask.request.path,method=flask.request.method)[0]).__dict__
-
         if view_func!={} and issubclass(view_func['view_class'], ICTVAuthPage):
             if is_test():
                 if hasattr(app, 'test_user'):
@@ -136,6 +135,7 @@ def get_authentication_processor(app):
                 u = User.selectBy(email='admin@ictv').getOne(None)
                 if u is not None:
                     app.session['user'] = u.to_dictionary(['id', 'fullname', 'username', 'email'])
+                    print(app.session)
                     return post_auth()
 
             mode = app.config['authentication'][0]  # The first mode is the main authentication mode
@@ -149,29 +149,31 @@ def get_authentication_processor(app):
     return authentication_processor
 
 
-def web_ctx_processor():
-    """
-        Populate the g variable to mimic the old web.py web.ctx variable
-        using meaningful values when behind a proxy.
-        values available in g are:
-            ["ip","host","homedomain","protocol","query","homepath"]
+def get_web_ctx_processor():
+    def web_ctx_processor():
+        """
+            Populate the g variable to mimic the old web.py web.ctx variable
+            using meaningful values when behind a proxy.
+            values available in g are:
+                ["ip","host","homedomain","protocol","query","homepath"]
 
-    """
+        """
+        if flask.request.headers.getlist("X-Forwarded-For"):
+           flask.g.ip = flask.request.headers.getlist("X-Forwarded-For")[0]
+        else:
+           flask.g.ip = flask.request.remote_addr
 
-    if flask.request.headers.getlist("X-Forwarded-For"):
-       flask.g.ip = flask.request.headers.getlist("X-Forwarded-For")[0]
-    else:
-       flask.g.ip = flask.request.remote_addr
+        if flask.request.headers.getlist("X-Forwarded-Host"):
+           flask.g.host  = flask.request.headers.getlist("X-Forwarded-Host")[0]
+        else:
+           flask.g.host = flask.request.url.split('/')[2]
 
-    if flask.request.headers.getlist("X-Forwarded-Host"):
-       flask.g.host  = flask.request.headers.getlist("X-Forwarded-Host")[0]
-    else:
-       flask.g.host = flask.request.url.split('/')[2]
+        flask.g.homedomain = '%s//%s' % (flask.request.url.split("//")[0], flask.g.host)
+        flask.g.protocol = flask.request.url.split(":")[0]
+        flask.g.query = ("?" if flask.request.query_string.decode()!="" else "")+flask.request.query_string.decode()
+        flask.g.homepath = flask.request.url_root.split(flask.g.homedomain+"/")[-1]
 
-    flask.g.homedomain = '%s//%s' % (flask.request.url.split("//")[0], flask.g.host)
-    flask.g.protocol = flask.request.url.split(":")[0]
-    flask.g.query = ("?" if flask.request.query_string.decode()!="" else "")+flask.request.query_string.decode()
-    flask.g.homepath = flask.request.url_root
+    return web_ctx_processor
 
 
 def dump_log_stats():
@@ -370,18 +372,18 @@ def get_app(config, sessions_path=""):
     app.transcoding_queue = TranscodingQueue()
 
     # Add an general authentication processor to handle user authentication
-    app.before_request(get_authentication_processor(app))
+    app.register_before_request(get_authentication_processor,cascade=True,needs_app=True)
 
     # Add a preprocessor to populate flask.g and mimic the old web.ctx
-    app.before_request(web_ctx_processor)
+    app.register_before_request(get_web_ctx_processor,cascade=True)
 
     # Add a preprocessor to encapsulate every SQL requests in a transaction on a per HTTP request basis
-    app.before_request(get_db_thread_preprocessor())
-    app.register_error_handler(DatabaseError,database_error_handler)
-    app.register_error_handler(werkzeug.exceptions.InternalServerError,internal_error_handler)
+    app.register_before_request(get_db_thread_preprocessor,cascade=True)
+    app.prepare_error_handler(DatabaseError,lambda:database_error_handler)
+    app.prepare_error_handler(werkzeug.exceptions.InternalServerError,lambda:internal_error_handler)
 
     # Add a hook to clean feedbacks from the previous request and prepare next feedbacks to be shown to the user
-    app.after_request(rotate_feedbacks)
+    app.register_after_request(lambda:rotate_feedbacks,cascade=True,needs_app=False)
 
     # Instantiate plugins through the plugin manager
     app.plugin_manager.instantiate_plugins(app)
@@ -389,7 +391,7 @@ def get_app(config, sessions_path=""):
     # Load themes and templates into database
     sqlhub.doInTransaction(load_templates_and_themes)
 
-    return app
+    return app.get_app_dispatcher()
 
 
 
@@ -413,7 +415,8 @@ def main(config):
             os.chdir(cwd)
         if not is_test():
             address_port = config['address_port'].rsplit(':',1)
-            app.run(host=address_port[0], port=address_port[1], debug=config['debug']!=None)
+            #app.run(host=address_port[0], port=address_port[1], debug=config['debug']!=None)
+            werkzeug.serving.run_simple(address_port[0],int(address_port[1]),app,use_debugger=config['debug']!=None)
         else:
             return app
     except Exception as e:
