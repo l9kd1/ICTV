@@ -21,7 +21,6 @@
 
 import smtplib
 
-import web
 from sqlobject import SQLObjectNotFound
 from sqlobject.dberrors import DuplicateEntryError
 
@@ -36,6 +35,7 @@ from ictv.app import sidebar
 from ictv.pages.utils import PermissionGate, ICTVAuthPage
 
 import ictv.flask.response as resp
+from flask_mail import Mail, Message
 
 
 logger = logging.getLogger('pages')
@@ -74,9 +74,14 @@ class EmailPage(ICTVAuthPage):
           for s in Screen.select():
               receivers=[u for u in s.owners]
         try:
-            for u in receivers:
-                web.sendmail(web.config.smtp_sendername, u.email, subject, email_body,
-                             headers={'Content-Type': 'text/html;charset=utf-8'})
+            mail = Mail(self.app)
+            print([u.email for u in receivers])
+            msg = Message(recipients=[u.email for u in receivers],
+                subject=subject,
+                body=email_body,
+                extra_headers={'Content-Type': 'text/html;charset=utf-8'}
+            )
+            mail.send(msg)
         except smtplib.SMTPException:
             logger.error('An error occured when sending email ', exc_info=True)
         return resp.seeother("/")

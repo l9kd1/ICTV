@@ -59,11 +59,9 @@ from ictv.storage.cache_manager import CleanupScheduler
 from ictv.storage.download_manager import DownloadManager
 from ictv.storage.transcoding_queue import TranscodingQueue
 
-from ictv.flask.migration_adapter import render_jinja, FrankenFlask
 import ictv.flask.response as resp
-
+from ictv.flask.migration_adapter import render_jinja, FrankenFlask
 from ictv.flask.mapping import init_flask_url_mapping
-
 
 class IndexPage(ICTVAuthPage):
     @sidebar
@@ -303,14 +301,14 @@ def get_app(config, sessions_path=""):
         info_texts = yaml.unsafe_load(f)
 
     # Load the SMTP config into web.py
-    # smtp_conf = app.config.get('smtp', None)
-    # if smtp_conf:
-    #     web.config.smtp_sendername = smtp_conf['sender_name']
-    #     web.config.smtp_server = smtp_conf['host']
-    #     web.config.smtp_port = smtp_conf['port']
-    #     web.config.smtp_username = smtp_conf.get('username', '')
-    #     web.config.smtp_password = smtp_conf.get('password', '')
-    #     web.config.smtp_starttls = smtp_conf.get('starttls', False)
+    smtp_conf = app.config.get('smtp', None)
+    if smtp_conf:
+        app.config['MAIL_DEFAULT_SENDER'] = smtp_conf['sender_name']
+        app.config['MAIL_SERVER'] = smtp_conf['host']
+        app.config['MAIL_PORT'] = smtp_conf['port']
+        app.config['MAIL_USERNAME'] = smtp_conf.get('username', '')
+        app.config['MAIL_PASSWORD'] = smtp_conf.get('password', '')
+        app.config['MAIL_USE_TLS'] = smtp_conf.get('starttls', False)
 
     # Create a persistent HTTP session storage for the app
     # app.session = web.session.Session(app, OptimisticThreadSafeDisktore(os.path.join(sessions_path, 'sessions')))
