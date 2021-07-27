@@ -19,7 +19,6 @@
 #    You should have received a copy of the GNU Affero General Public License
 #    along with ICTV.  If not, see <http://www.gnu.org/licenses/>.
 
-import web
 from onelogin.saml2.auth import OneLogin_Saml2_Auth
 from onelogin.saml2.utils import OneLogin_Saml2_Utils
 
@@ -27,7 +26,9 @@ from ictv.models.user import User
 from ictv.pages.utils import ICTVPage
 
 import ictv.flask.response as resp
+import ictv.flask.migration_adapter as Storage
 
+import flask
 
 def build_settings(settings):
     """
@@ -64,7 +65,7 @@ def init_saml_auth(req, settings):
 
 def prepare_request():
     # If server is behind proxys or balancers use the HTTP_X_FORWARDED fields
-    data = web.input()
+    data = Storage(flask.request.form)
     return {
         'https': 'on' if flask.g.protocol == 'https' else 'off',
         'http_host': flask.request.environ["SERVER_NAME"],
@@ -104,7 +105,7 @@ class Shibboleth(ICTVPage):
         not_auth_warn = False
         success_slo = False
 
-        input_data = web.input()
+        input_data = self.form
 
         if 'sso' in input_data:
             raise resp.seeother(auth.login())
@@ -131,7 +132,7 @@ class Shibboleth(ICTVPage):
         not_auth_warn = False
         success_slo = False
 
-        input_data = web.input()
+        input_data = self.form
 
         if 'acs' in input_data:
             auth.process_response()  # decrypt and extract informations

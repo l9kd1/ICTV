@@ -90,7 +90,7 @@ class ScreenSubscriptionsPage(ICTVAuthPage):
             """ returns True if the the user wants to subscribe to the channel while its plugin is not activated or if
                 the user tries to subscribe to the channel without being in its authorized subscribers"""
             return subscribe and (type(channel) is PluginChannel and channel.plugin.activated != "yes" or (subscribe and not channel.can_subscribe(user)))
-        form = web.input()
+        form = self.form
         try:
             screen = Screen.get(screen_id)
             u = User.get(self.session['user']['id'])

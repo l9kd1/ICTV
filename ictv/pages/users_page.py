@@ -60,7 +60,7 @@ class UsersPage(ICTVAuthPage):
     @PermissionGate.administrator
     def post(self):
         """ Handles user creation, editing and deletion. """
-        form = web.input()
+        form = self.form
         super_admin = form.get('super_admin', False) == 'on'
         admin = form.get('admin', False) == 'on'
         if super_admin:

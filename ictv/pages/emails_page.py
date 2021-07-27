@@ -49,7 +49,7 @@ class EmailPage(ICTVAuthPage):
         return self.renderer.emails(user=u, channels=channels)
 
     def post(self):
-        form = web.input()
+        form = self.form
         subject = form['subject']
         email_body = form['body']
         to = form['to']

@@ -121,7 +121,7 @@ class ScreensPage(ICTVAuthPage):
     @PermissionGate.screen_administrator
     def post(self):
         """ Handles screen creation, editing, deletion, channel subscriptions. """
-        form = web.input()
+        form = self.form
         u = User.get(self.session['user']['id'])
         try:
             if form.action == 'delete':

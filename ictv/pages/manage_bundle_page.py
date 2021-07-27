@@ -69,7 +69,7 @@ class ManageBundlePage(ICTVAuthPage):
             """ returns True if the channel to add is the bundle itself
                 or if the channel is a PluginChannel with disabled plugin """
             return bundle.id == channel.id or add and type(channel) is PluginChannel and channel.plugin.activated != "yes"
-        form = web.input()
+        form = self.form
         try:
             bundle = ChannelBundle.get(bundle_id)
             u = User.get(self.session['user']['id'])

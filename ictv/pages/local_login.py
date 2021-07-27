@@ -45,7 +45,7 @@ class LoginPage(ICTVPage):
     def post(self):
         if 'user' in self.session:
             raise resp.seeother('/')
-        form = web.input()
+        form = self.form
         try:
             user = User.selectBy(email=form.email, password=hash_password(form.password)).getOne(None)
             if not user:
@@ -81,7 +81,7 @@ class ResetPage(ICTVPage):
 
     def post(self, secret):
         user = User.selectBy(reset_secret=secret).getOne(None)
-        form = web.input()
+        form = self.form
         try:
             if form.get('password1') != form.get('password2'):
                 raise ImmediateFeedback('reset', 'passwords_do_not_match')

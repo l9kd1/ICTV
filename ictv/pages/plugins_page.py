@@ -40,7 +40,7 @@ class PluginsPage(ICTVAuthPage):
     @PermissionGate.super_administrator
     def post(self):
         """ Handles plugin editing and activation. """
-        form = web.input()
+        form = self.form
         try:
             if form.action == 'check_dependencies':
                 self.plugin_manager.check_all_plugins_dependencies()
