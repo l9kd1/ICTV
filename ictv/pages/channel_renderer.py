@@ -32,9 +32,9 @@ class ChannelRenderer(ICTVPage):
         try:
             channel = Channel.get(channel_id)
             if channel.secret != secret:
-                raise resp.forbidden()
+                resp.forbidden()
         except SQLObjectNotFound:
-            raise resp.notfound()
+            resp.notfound()
         channel_capsules = []
         already_added_channels = set()
         for plugin_channel in channel.flatten(keep_disabled_channels=True):

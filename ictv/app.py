@@ -133,7 +133,6 @@ def get_authentication_processor(app):
                 u = User.selectBy(email='admin@ictv').getOne(None)
                 if u is not None:
                     app.session['user'] = u.to_dictionary(['id', 'fullname', 'username', 'email'])
-                    print(app.session)
                     return post_auth()
 
             mode = app.config['authentication'][0]  # The first mode is the main authentication mode
@@ -413,7 +412,6 @@ def main(config):
             os.chdir(cwd)
         if not is_test():
             address_port = config['address_port'].rsplit(':',1)
-            #app.run(host=address_port[0], port=address_port[1], debug=config['debug']!=None)
             werkzeug.serving.run_simple(address_port[0],int(address_port[1]),app,use_debugger=config['debug']!=None)
         else:
             return app

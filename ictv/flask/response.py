@@ -1,4 +1,4 @@
-import flask 
+import flask
 
 def created():
     return flask.make_response('201 Created', 201)
@@ -10,13 +10,13 @@ def seeother(url):
     return flask.redirect(url, 303)
 
 def badrequest(message=None):
-    return flask.make_response(message, 400)
+    return flask.abort(400, message)
 
 def forbidden(message=None):
-    return flask.make_response(message, 403)
+    return flask.abort(403, message)
 
 def notfound(message=None):
-    return flask.make_response(message, 404)
+    return flask.abort(404, message)
 
 def nomethod():
-    return flask.make_response('405 Method Not Allowed', 405)
+    return flask.abort(405,'405 Method Not Allowed')

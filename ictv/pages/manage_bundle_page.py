@@ -60,7 +60,7 @@ class ManageBundlePage(ICTVAuthPage):
             bundle = ChannelBundle.get(bundle_id)
             u = User.get(self.session['user']['id'])
         except SQLObjectNotFound:
-            raise resp.notfound()
+            resp.notfound()
         return self.render_page(bundle, u)
 
     @PermissionGate.administrator
@@ -85,7 +85,7 @@ class ManageBundlePage(ICTVAuthPage):
             except SQLObjectNotFound:
                 logger.warning('user %s tried to add a channel which does not exist to bundle %d',
                                u.log_name, bundle.id)
-                raise resp.forbidden()
+                resp.forbidden()
             # if somebody tries to add a channel with a disabled plugin or to add a bundle to itself
             wrong_channels = [(channel, add) for channel, add in changes if wrong_channel(channel, bundle, add)]
             if wrong_channels:
@@ -123,7 +123,7 @@ class ManageBundlePage(ICTVAuthPage):
             logger.info(message)
             add_feedback("manage_channels", 'ok')
         except SQLObjectNotFound:
-            raise resp.notfound()
+            resp.notfound()
         except ImmediateFeedback:
             pass
         store_form(form)
