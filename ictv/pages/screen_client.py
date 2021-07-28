@@ -32,7 +32,7 @@ class ScreenClient(ICTVPage):
         try:
             screen = Screen.get(screen_id)
             if screen.secret != secret:
-                raise resp.forbidden()
+                resp.forbidden()
         except SQLObjectNotFound:
-            raise resp.notfound()
+            resp.notfound()
         return self.ictv_renderer.render_screen_client(screen)

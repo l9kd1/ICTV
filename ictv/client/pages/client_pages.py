@@ -43,7 +43,7 @@ class Kickstart(ICTVPage):
             if self._path_has_ext(path, 'ks') or self._path_has_ext(path, 'cfg'):
                 content = content.format(ictv_root_url=web.ctx.homedomain, **self.config['client'])
             return content
-        raise resp.notfound()
+        resp.notfound()
 
     @staticmethod
     def _path_has_ext(path, ext):

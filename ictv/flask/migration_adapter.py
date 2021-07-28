@@ -52,6 +52,21 @@ class FrankenFlask(Flask):
         """
             Register sub applications to provision the dispatcher.
         """
+        # Copying the ictv_app config
+        tmp_config = self.config.copy()
+        tmp_config.update(app.config)
+        app.config = tmp_config
+
+        # Copying the plugin manager
+        app.plugin_manager = self.plugin_manager
+
+        # Copying the slide renderer
+        app.ictv_renderer = self.ictv_renderer
+
+        # Duplicating the secret_key to make the session accessible
+        # WARN: MUST be the same as self.secret_key
+        app.secret_key = self.secret_key
+
         self.plugins[route] = app
         self.appset.add(app)
 
