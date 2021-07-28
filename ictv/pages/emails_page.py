@@ -75,7 +75,6 @@ class EmailPage(ICTVAuthPage):
               receivers=[u for u in s.owners]
         try:
             mail = Mail(self.app)
-            print([u.email for u in receivers])
             msg = Message(recipients=[u.email for u in receivers],
                 subject=subject,
                 body=email_body,

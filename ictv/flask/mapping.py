@@ -5,10 +5,7 @@ from ictv.pages import buildings_page, channels_page, channel_page, manage_bundl
 from ictv.pages import storage_page, logs_page, emails_page, local_login, utils, shibboleth
 from ictv.storage import cache_page, transcoding_page
 from ictv.client.pages import client_pages
-
-def get_methods(elem):
-    http_methods = ["GET","POST","DELETE","PUT","HEAD","CONNECT","OPTIONS","TRACE","PATCH"]
-    return [m for m in http_methods if elem.__dict__.get(m.lower())!=None]
+from ictv.common.utils import get_methods
 
 def init_flask_url_mapping(app):
 
