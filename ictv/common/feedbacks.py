@@ -20,6 +20,7 @@
 #    along with ICTV.  If not, see <http://www.gnu.org/licenses/>.
 
 import flask
+from ictv.flask.migration_adapter import Storage
 
 def get_feedbacks():
     """ Returns feedbacks available for this request. """
@@ -86,8 +87,8 @@ class ImmediateFeedback(Exception):
 
 
 def store_form(form):
-    flask.session.form = list(form.items())
+    flask.session['form'] = Storage(list(form.items()))
 
 
-def pop_previous_form():
+def pop_previous_form() -> Storage:
     return flask.session.pop('form', {})
