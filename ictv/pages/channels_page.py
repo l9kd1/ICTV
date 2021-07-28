@@ -87,7 +87,7 @@ class ChannelsPage(ICTVAuthPage):
                         channel = ChannelBundle(name=name, description=description, subscription_right=form.subscription_right,
                                           enabled=enabled)
                     else:
-                        raise resp.badrequest()
+                        resp.badrequest()
                 except SQLObjectNotFound:
                     raise ImmediateFeedback(form.action, 'invalid_plugin')
                 except DuplicateEntryError:
@@ -120,7 +120,7 @@ class ChannelsPage(ICTVAuthPage):
                 elif form.action == 'edit-bundle':
                     pass  # There is nothing more to edit for a bundle than a channel
                 else:
-                    raise resp.badrequest()
+                    resp.badrequest()
 
                 try:
                     channel.set(**new_state)
@@ -158,7 +158,7 @@ class ChannelsPage(ICTVAuthPage):
             elif form.action == 'add-users-channel':
                 try:
                     if 'users' not in form:
-                        raise resp.badrequest()
+                        resp.badrequest()
                     form.users = json.loads(form.users)
                     form.id = int(form.id)
                     channel = PluginChannel.get(form.id)
@@ -269,7 +269,7 @@ class ChannelsPage(ICTVAuthPage):
                             add_feedback(form.action, 'general_error', str(e))
                             raise resp.seeother('/channels/%d' % channel.id)
                     else:
-                        raise resp.forbidden()
+                        resp.forbidden()
                     form.name = channel.name
                 except (SQLObjectNotFound, ValueError):
                     raise ImmediateFeedback(form.action, 'invalid_id')

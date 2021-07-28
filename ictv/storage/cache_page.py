@@ -37,6 +37,6 @@ class CachePage(ICTVPage):
                 task.result()
             raise resp.seeother('/' + Asset.get(asset_id)._get_path(force=True))  # Task is complete but asset may be still marked as in flight
         except SQLObjectNotFound:
-            raise resp.notfound()
+            resp.notfound()
         except KeyError:
             raise resp.seeother('/cache/' + str(asset_id))

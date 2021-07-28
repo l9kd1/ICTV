@@ -83,7 +83,7 @@ def webapp_decorator(func, permission_level):
             kwargs['channel'] = channel
             return func(*args, **kwargs)
         else:
-            raise resp.forbidden()
+            resp.forbidden()
 
     return wrapper
 

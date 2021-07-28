@@ -168,7 +168,7 @@ class LogAs(ICTVAuthPage):
                                      real_user.log_name, u.log_name)
                     raise resp.seeother('/')
                 else:
-                    raise resp.forbidden()
+                    resp.forbidden()
 
         if target_user == 'nobody':
             if 'real_user' in self.session:
@@ -231,7 +231,7 @@ class PermissionGateMeta(type):
                             raise resp.seeother('/logas/nobody')
                     if permission_level in u.highest_permission_level:
                         return f(*args, **kwargs)
-                    raise resp.forbidden()
+                    resp.forbidden()
 
             return decorated_function
 
