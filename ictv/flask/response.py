@@ -4,7 +4,7 @@ def created():
     return flask.make_response('201 Created', 201)
 
 def nocontent():
-    return flask.make_response('204 No Content', 204)
+    return flask.abort(204, '204 No Content')
 
 def seeother(url):
     return flask.redirect(url, 303)

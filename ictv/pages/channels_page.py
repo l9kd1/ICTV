@@ -221,12 +221,12 @@ class ChannelsPage(ICTVAuthPage):
                             elif pattern.match(v['type']):
                                 inner_type = v['type'][5:-1]
                                 if inner_type == 'string':
-                                    value = web.input(**{k: ['']})[k]
+                                    value = self.input(**{k: ['']})[k]
                                 elif pattern.match(inner_type):
                                     inner_type = inner_type[5:-1]
                                     if inner_type == 'string':
                                         delimiter = form[k + '-delimiter']
-                                        values = web.input(**{k: ['']})[k]
+                                        values = self.input(**{k: ['']})[k]
                                         lists = []
                                         l = []
                                         for v in values:
