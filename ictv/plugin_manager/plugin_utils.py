@@ -59,7 +59,7 @@ def webapp_decorator(func, permission_level):
     This decorator wraps a web.py page function and verify that the current user has sufficient permissions to access
     the PluginChannel web application. The channel object is passed to the page as the ``channel`` parameter.
     If no sufficient permission are found, resp.forbidden() is raised.
-    
+
     :param func: the web.py page function
     :param permission_level: the minimum permission level needed
     :return: the wrapper
@@ -68,8 +68,10 @@ def webapp_decorator(func, permission_level):
     @wraps(func)
     def wrapper(*args, **kwargs):
         app = flask.current_app
-
-        channelid = re.findall(r'\d+', flask.request.path)[0]
+        if len(flask.g.homepath)>0: # we are in a sub-app
+            channelid = re.findall(r'\d+', flask.g.homepath)[0]
+        else:
+            channelid = re.findall(r'\d+', flask.request.path)[0]
         channel = PluginChannel.get(channelid)
         u = User.get(app.session['user']['id'])
         if 'real_user' in app.session:
