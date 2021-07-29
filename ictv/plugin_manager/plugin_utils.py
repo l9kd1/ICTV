@@ -94,8 +94,7 @@ def seeother(channel_id, plugin_absolute_url):
         'Content-Type': 'text/html',
         'Location': '/channels/%d%s' % (int(channel_id), plugin_absolute_url)
     }
-    return web.HTTPError(status='303 See Other', headers=headers)
-
+    return flask.Response(status=303, headers=headers)
 
 class MisconfiguredParameters(BaseException):
     """ An utility class for a plugin to report one or more faulty parameters to ICTV. """

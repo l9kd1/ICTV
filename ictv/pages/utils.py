@@ -106,6 +106,12 @@ class ICTVPage(MethodView):
         """ Returns the request form. """
         return Storage(flask.request.form)
 
+    def input(self, **defaults) -> Storage:
+        """ Returns the request form. """
+        form = defaults
+        form.update(flask.request.form)
+        return Storage(form)
+
     def url_for(self, page_class, *args):
         """ Returns an URL filled with the given arguments to the given page. """
         page_path = page_class.__module__ + '.' + page_class.__qualname__

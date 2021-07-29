@@ -1,5 +1,11 @@
 import flask
 
+def created():
+    flask.make_response('201 Created', 201)
+
+def nocontent():
+    flask.abort(204, '204 No Content')
+
 def seeother(url):
     flask.abort(flask.redirect(url, code=303))
 
@@ -11,3 +17,6 @@ def forbidden(message=None):
 
 def notfound(message=None):
     flask.abort(404, message)
+
+def nomethod():
+    flask.abort(405,'405 Method Not Allowed')

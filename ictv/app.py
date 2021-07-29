@@ -168,7 +168,8 @@ def get_web_ctx_processor():
         flask.g.homedomain = '%s//%s' % (flask.request.url.split("//")[0], flask.g.host)
         flask.g.protocol = flask.request.url.split(":")[0]
         flask.g.query = ("?" if flask.request.query_string.decode()!="" else "")+flask.request.query_string.decode()
-        flask.g.homepath = flask.request.url_root.split(flask.g.homedomain+"/")[-1]
+        flask.g.home = flask.request.url_root
+        flask.g.homepath = flask.g.home.split(flask.g.homedomain+"/")[-1]
 
     return web_ctx_processor
 

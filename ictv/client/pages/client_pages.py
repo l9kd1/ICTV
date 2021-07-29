@@ -21,12 +21,11 @@
 
 import os
 from zipfile import ZipFile
-
-import web
+import flask
 
 from ictv.common import get_root_path
 from ictv.pages.utils import ICTVPage
-
+import ictv.flask.response as resp
 
 class Kickstart(ICTVPage):
     """ A simple page that serves KS files, providing a way to adapt the client deployment further in the future. """
@@ -41,7 +40,7 @@ class Kickstart(ICTVPage):
             with open(path, flags) as f:
                 content = f.read()
             if self._path_has_ext(path, 'ks') or self._path_has_ext(path, 'cfg'):
-                content = content.format(ictv_root_url=web.ctx.homedomain, **self.config['client'])
+                content = content.format(ictv_root_url=flask.g.homedomain, **self.config['client'])
             return content
         resp.notfound()
 
@@ -78,6 +77,6 @@ def make_client_zip():
         add_file('static/jquery.xmlrpc.min.js')
         add_file('static/waiting_screen.html')
         with open(os.path.join(get_root_path(), 'client', 'static', 'config' + os.extsep + 'json')) as client_config_file:
-            client_zip.writestr('static/config.json', client_config_file.read() % web.ctx.homedomain)
+            client_zip.writestr('static/config.json', client_config_file.read() % flask.g.homedomain)
 
 make_system_zip()

@@ -20,6 +20,7 @@
 #    along with ICTV.  If not, see <http://www.gnu.org/licenses/>.
 
 import flask
+from ictv.flask.migration_adapter import Storage
 
 def get_feedbacks():
     """ Returns feedbacks available for this request. """
