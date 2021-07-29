@@ -145,4 +145,4 @@ class ScreenSubscriptionsPage(ICTVAuthPage):
         except ImmediateFeedback:
             pass
         store_form(form)
-        raise resp.seeother("/screens/%s/subscriptions" % screen.id)
+        resp.seeother("/screens/%s/subscriptions" % screen.id)

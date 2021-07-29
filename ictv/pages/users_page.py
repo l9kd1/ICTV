@@ -21,7 +21,7 @@
 
 import re
 
-import web
+import flask
 from sqlobject import SQLObjectNotFound
 from sqlobject.dberrors import DuplicateEntryError
 
@@ -43,7 +43,7 @@ class UserDetailPage(ICTVAuthPage):
                 resp.forbidden()
             return self.render_page(u)
         except (SQLObjectNotFound, ValueError):
-            raise resp.seeother('/users')
+            resp.seeother('/users')
 
     @sidebar
     def render_page(self, user):
@@ -136,7 +136,7 @@ class UsersPage(ICTVAuthPage):
         except ImmediateFeedback:
             pass
         store_form(form)
-        raise resp.seeother('/users')
+        return self.render_page()
 
     @sidebar
     def render_page(self):

@@ -34,4 +34,4 @@ class ScreenRouter(ICTVPage):
             screen = ScreenMac.selectBy(mac=mac).getOne().screen
         except SQLObjectNotFound:
             resp.notfound()
-        raise resp.seeother(screen.get_view_link())
+        resp.seeother(screen.get_view_link())

@@ -138,7 +138,7 @@ class DummyLogin(ICTVPage):
             self.session['user'] = u.to_dictionary(['id', 'fullname', 'email'])
             if 'sidebar' in self.session:
                 self.session.pop('sidebar')
-        raise resp.seeother('/')
+        resp.seeother('/')
 
 
 class DummyRenderer(ICTVAuthPage):
@@ -166,7 +166,7 @@ class LogAs(ICTVAuthPage):
                     self.session['user'] = u.to_dictionary(['id', 'fullname', 'email'])
                     self.logger.info('the super_administrator %s has been logged as %s',
                                      real_user.log_name, u.log_name)
-                    raise resp.seeother('/')
+                    resp.seeother('/')
                 else:
                     resp.forbidden()
 
@@ -174,7 +174,7 @@ class LogAs(ICTVAuthPage):
             if 'real_user' in self.session:
                 self.session['user'] = self.session['real_user']
                 self.session.pop('real_user')
-            raise resp.seeother('/')
+            resp.seeother('/')
         log_as()
 
         return "the user " + target_user + " does not exist"
@@ -192,13 +192,13 @@ class DummyCapsuleRenderer(ICTVAuthPage):  # TODO: Move this to editor/app.py
 class LogoutPage(ICTVAuthPage):
     def post(self):
         self.session.clear()
-        return resp.seeother('/')
+        resp.seeother('/')
 
 
 class TourPage(ICTVAuthPage):
     def post(self, status):
         User.get(self.session['user']['id']).has_toured = status == 'ended'
-        return resp.seeother(flask.request.environ.get('HTTP_REFERER', '/'))
+        resp.seeother(flask.request.environ.get('HTTP_REFERER', '/'))
 
 
 class PermissionGateMeta(type):
@@ -228,7 +228,7 @@ class PermissionGateMeta(type):
                         real_user = User.get(app.session['real_user']['id'])
                         # if the real user has at least the same right as the "logged as" user
                         if u.highest_permission_level not in real_user.highest_permission_level:
-                            raise resp.seeother('/logas/nobody')
+                            resp.seeother('/logas/nobody')
                     if permission_level in u.highest_permission_level:
                         return f(*args, **kwargs)
                     resp.forbidden()

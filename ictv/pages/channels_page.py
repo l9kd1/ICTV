@@ -264,10 +264,10 @@ class ChannelsPage(ICTVAuthPage):
                         except MisconfiguredParameters as e:
                             for faulty_param in e:
                                 add_feedback(form.action, faulty_param[0], faulty_param)
-                            raise resp.seeother('/channels/%d' % channel.id)
+                            resp.seeother('/channels/%d' % channel.id)
                         except Exception as e:
                             add_feedback(form.action, 'general_error', str(e))
-                            raise resp.seeother('/channels/%d' % channel.id)
+                            resp.seeother('/channels/%d' % channel.id)
                     else:
                         resp.forbidden()
                     form.name = channel.name

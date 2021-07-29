@@ -127,4 +127,4 @@ class ManageBundlePage(ICTVAuthPage):
         except ImmediateFeedback:
             pass
         store_form(form)
-        raise resp.seeother("/channels/%s/manage_bundle" % bundle.id)
+        resp.seeother("/channels/%s/manage_bundle" % bundle.id)

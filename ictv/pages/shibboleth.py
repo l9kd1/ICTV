@@ -108,9 +108,9 @@ class Shibboleth(ICTVPage):
         input_data = self.form
 
         if 'sso' in input_data:
-            raise resp.seeother(auth.login())
+            resp.seeother(auth.login())
 
-        raise resp.seeother('/')
+        resp.seeother('/')
 
     def post(self):
         """
@@ -161,6 +161,6 @@ class Shibboleth(ICTVPage):
 
                 self_url = OneLogin_Saml2_Utils.get_self_url(req)
                 if 'RelayState' in input_data and self_url != input_data['RelayState']:
-                    raise resp.seeother(auth.redirect_to(input_data['RelayState']))
+                    resp.seeother(auth.redirect_to(input_data['RelayState']))
 
-        raise resp.seeother('/')
+        resp.seeother('/')

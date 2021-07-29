@@ -46,7 +46,7 @@ class ScreenConfigPage(ICTVAuthPage):
             sc = Screen.get(id)
             return self.render_page(sc)
         except (SQLObjectNotFound, ValueError):
-            raise resp.seeother('/screens')
+            resp.seeother('/screens')
 
     @sidebar
     def render_page(self, screen):
@@ -62,7 +62,7 @@ class DetailPage(ICTVAuthPage):
             sc = Screen.get(id)
             return self.render_page(sc)
         except (SQLObjectNotFound, ValueError):
-            raise resp.seeother('/screens')
+            resp.seeother('/screens')
 
     @sidebar
     def render_page(self,screen):

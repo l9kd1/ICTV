@@ -35,8 +35,8 @@ class CachePage(ICTVPage):
             if self.download_manager.has_pending_task_for_asset(asset_id):
                 task = self.download_manager.get_pending_task_for_asset(asset_id)
                 task.result()
-            raise resp.seeother('/' + Asset.get(asset_id)._get_path(force=True))  # Task is complete but asset may be still marked as in flight
+            resp.seeother('/' + Asset.get(asset_id)._get_path(force=True))  # Task is complete but asset may be still marked as in flight
         except SQLObjectNotFound:
             resp.notfound()
         except KeyError:
-            raise resp.seeother('/cache/' + str(asset_id))
+            resp.seeother('/cache/' + str(asset_id))

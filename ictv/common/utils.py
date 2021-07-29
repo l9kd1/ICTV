@@ -117,7 +117,7 @@ def sidebar(f):
                     real_user = User.get(app.session['real_user']['id'])
                     # if the real user has at least the same right as the "logged as" user
                     if u.highest_permission_level not in real_user.highest_permission_level:
-                        raise resp.seeother('/logas/nobody')
+                        resp.seeother('/logas/nobody')
                 user_sidebar = {}
                 for class_name in get_classes_from_user(u):
                     e = sidebar_elements[class_name]

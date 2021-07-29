@@ -86,8 +86,8 @@ class ImmediateFeedback(Exception):
 
 
 def store_form(form):
-    flask.session.form = list(form.items())
+    flask.session.form = form
 
 
 def pop_previous_form():
-    return flask.session.pop('form', {})
+    return flask.session.__dict__.pop("form",{})

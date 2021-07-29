@@ -291,6 +291,9 @@ def get_app(config, sessions_path=""):
     # Create a base flask application
     app = FrankenFlask(__name__)
 
+    # The following line might be used to speedup queries
+    #app.config["SEND_FILE_MAX_AGE_DEFAULT"]=100
+
     app.config.update(**config)
 
     init_flask_url_mapping(app)

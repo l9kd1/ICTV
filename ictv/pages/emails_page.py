@@ -84,4 +84,4 @@ class EmailPage(ICTVAuthPage):
             mail.send(msg)
         except smtplib.SMTPException:
             logger.error('An error occured when sending email ', exc_info=True)
-        return resp.seeother("/")
+        resp.seeother("/")

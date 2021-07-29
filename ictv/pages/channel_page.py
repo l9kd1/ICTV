@@ -79,7 +79,7 @@ class DetailPage(ICTVAuthPage):
         form.channel_id = channel_id
         form.name = channel.name
         store_form(form)
-        raise resp.seeother('/channels')
+        resp.seeother('/channels')
 
     @sidebar
     def render_page(self, channel):
@@ -184,14 +184,14 @@ class SubscribeScreensPage(ICTVAuthPage):
             except SQLObjectIntegrityError:
                 # when there id more than one subscription matching the pair channel/screen
                 pass
-        raise resp.seeother("/channels/%s/subscriptions" % channel_id)
+        resp.seeother("/channels/%s/subscriptions" % channel_id)
 
 
 class ForceUpdateChannelPage(ICTVAuthPage):
     @ChannelGate.contributor
     def get(self, channel_id, channel):
         self.plugin_manager.invalidate_cache(channel.plugin.name, channel.id)
-        raise resp.seeother('/channel/%d' % channel.id)
+        resp.seeother('/channel/%d' % channel.id)
 
 
 class RequestPage(ICTVAuthPage):
@@ -204,7 +204,7 @@ class RequestPage(ICTVAuthPage):
         st = "You just receive a request of subscription for channel " + chan.name + ". Could you please subscribe " + str(user.fullname) + " (" + user.email + ") to this channel."
         for admin in chan.get_admins():
             web.sendmail(web.config.smtp_sendername, admin.email, 'Request for subscription to a channel', st, headers={'Content-Type': 'text/html;charset=utf-8'})
-        return resp.seeother('/channels')
+        resp.seeother('/channels')
 
 
 class ChannelPage(ICTVAuthPage):
@@ -264,7 +264,7 @@ class ChannelPage(ICTVAuthPage):
             if channel is not None and channel.enabled:
                 form.enabled = 'on'
         store_form(form)
-        raise resp.seeother('/channels/%d' % channel.id)
+        resp.seeother('/channels/%d' % channel.id)
 
     @sidebar
     def render_page(self, channel):

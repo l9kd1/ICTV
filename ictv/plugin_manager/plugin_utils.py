@@ -78,7 +78,7 @@ def webapp_decorator(func, permission_level):
             real_user = User.get(app.session['real_user']['id'])
             # if the real user has at least the same right as the "logged as" user
             if u.highest_permission_level not in real_user.highest_permission_level:
-                raise resp.seeother('/logas/nobody')
+                resp.seeother('/logas/nobody')
         if UserPermissions.administrator in u.highest_permission_level or permission_level in channel.get_channel_permissions_of(u):
             kwargs['channel'] = channel
             return func(*args, **kwargs)
