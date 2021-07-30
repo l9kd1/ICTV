@@ -268,7 +268,7 @@ class ChannelsPage(ICTVAuthPage):
                             resp.seeother('/channels/config/%d' % channel.id)
                         except Exception as e:
                             add_feedback(form.action, 'general_error', str(e))
-                            return flask.redirect('/channels/config/%d' % channel.id, code=303)
+                            resp.seeother('/channels/config/%d' % channel.id)
                     else:
                         resp.forbidden()
                     form.name = channel.name

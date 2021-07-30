@@ -46,12 +46,24 @@ class ManageBundlePage(ICTVAuthPage):
         channels = Channel.select()
         plugin_channels = [c for c in channels if type(c) == PluginChannel]
         bundle_channels = [c for c in channels if type(c) == ChannelBundle]
+
+        subscribed =   {channel.id:
+                            {
+                                'channel_name': channel.name,
+                                'plugin_channel': hasattr(channel, 'plugin')
+                            }
+                            for channel in bundle.bundled_channels
+                        }
+
         return self.renderer.manage_bundle(
             bundle=bundle,
             user=user,
             subscribed_channels=bundle.bundled_channels,
             plugin_channels=plugin_channels,
             bundle_channels=bundle_channels,
+            subscribed=subscribed,
+            plugin_channels_names={c.id: c.name for c in plugin_channels},
+            bundle_channels_names = {c.id: c.name for c in bundle_channels}
         )
 
     @PermissionGate.administrator
@@ -127,4 +139,4 @@ class ManageBundlePage(ICTVAuthPage):
         except ImmediateFeedback:
             pass
         store_form(form)
-        resp.seeother("/channels/%s/manage_bundle" % bundle.id)
+        resp.seeother("/channels/config/%s/manage_bundle" % bundle.id)

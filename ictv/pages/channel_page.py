@@ -184,7 +184,7 @@ class SubscribeScreensPage(ICTVAuthPage):
             except SQLObjectIntegrityError:
                 # when there id more than one subscription matching the pair channel/screen
                 pass
-        resp.seeother("/channels/%s/subscriptions" % channel_id)
+        resp.seeother("/channels/config/%s/subscriptions" % channel_id)
 
 
 class ForceUpdateChannelPage(ICTVAuthPage):
@@ -264,7 +264,7 @@ class ChannelPage(ICTVAuthPage):
             if channel is not None and channel.enabled:
                 form.enabled = 'on'
         store_form(form)
-        resp.seeother('/channels/%d' % channel.id)
+        resp.seeother('/channels/config/%d' % channel.id)
 
     @sidebar
     def render_page(self, channel):
