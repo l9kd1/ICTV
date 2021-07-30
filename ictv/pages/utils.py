@@ -104,13 +104,38 @@ class ICTVPage(MethodView):
     @property
     def form(self) -> Storage:
         """ Returns the request form. """
-        return Storage(flask.request.form)
+
+        # ImmutableMultiDict.to_dict() is not sufficient as it
+        # as it ignores multiple keys (form arrays)
+        # Manually adding the lists as lists int the Storage object
+        form_aslists = flask.request.form.lists()
+        finaldict = flask.request.form.to_dict()
+        for key,value in form_aslists:
+            if len(value)>1:
+                finaldict[key]=value
+        return Storage(finaldict)
 
     def input(self, **defaults) -> Storage:
         """ Returns the request form. """
-        form = defaults
-        form.update(flask.request.form)
-        return Storage(form)
+        original_form = defaults.copy()
+
+        form_aslists = flask.request.form.lists()
+        finaldict = flask.request.form.to_dict()
+        for key,value in form_aslists:
+            if len(value)>1:
+                finaldict[key]=value
+
+        original_form.update(finaldict)
+
+        # Replicating the web.input() strange behaviour
+        # when called with an expectation of multiple arguments
+        # see https://webpy.org/cookbook/input
+        for key,value in defaults.items():
+            if type(value)==type([]) and type(original_form[key])!=type([]):
+                original_form[key]=[original_form[key]]
+
+
+        return Storage(original_form)
 
     def url_for(self, page_class, *args):
         """ Returns an URL filled with the given arguments to the given page. """

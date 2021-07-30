@@ -37,7 +37,7 @@ def init_flask_url_mapping(app):
     app.add_url_rule('/screens/redirect/<string:mac>', view_func=ictv.pages.screen_router.ScreenRouter.as_view('ScreenRouter'), methods=get_methods(ictv.pages.screen_router.ScreenRouter))
     app.add_url_rule('/buildings', view_func=ictv.pages.buildings_page.BuildingsPage.as_view('BuildingsPage'), methods=get_methods(ictv.pages.buildings_page.BuildingsPage))
     app.add_url_rule('/channels', view_func=ictv.pages.channels_page.ChannelsPage.as_view('ChannelsPage'), methods=get_methods(ictv.pages.channels_page.ChannelsPage))
-    app.add_url_rule('/channels/<int:channel_id>', view_func=ictv.pages.channel_page.ChannelPage.as_view('ChannelPage'), methods=get_methods(ictv.pages.channel_page.ChannelPage))
+    app.add_url_rule('/channels/config/<int:channel_id>', view_func=ictv.pages.channel_page.ChannelPage.as_view('ChannelPage'), methods=get_methods(ictv.pages.channel_page.ChannelPage))
     app.add_url_rule('/channels/<int:id>/request/<int:user_id>', view_func=ictv.pages.channel_page.RequestPage.as_view('RequestPage'), methods=get_methods(ictv.pages.channel_page.RequestPage))
     app.add_url_rule('/channels/<int:bundle_id>/manage_bundle', view_func=ictv.pages.manage_bundle_page.ManageBundlePage.as_view('ManageBundlePage'), methods=get_methods(ictv.pages.manage_bundle_page.ManageBundlePage))
     app.add_url_rule('/channels/<int:channel_id>/subscriptions', view_func=ictv.pages.channel_page.SubscribeScreensPage.as_view('SubscribeScreensPage'), methods=get_methods(ictv.pages.channel_page.SubscribeScreensPage))

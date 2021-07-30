@@ -23,6 +23,7 @@ import json
 import logging
 import re
 
+import flask
 from sqlobject import NOT
 from sqlobject import SQLObjectNotFound
 from sqlobject.dberrors import DuplicateEntryError
@@ -264,10 +265,10 @@ class ChannelsPage(ICTVAuthPage):
                         except MisconfiguredParameters as e:
                             for faulty_param in e:
                                 add_feedback(form.action, faulty_param[0], faulty_param)
-                            resp.seeother('/channels/%d' % channel.id)
+                            resp.seeother('/channels/config/%d' % channel.id)
                         except Exception as e:
                             add_feedback(form.action, 'general_error', str(e))
-                            resp.seeother('/channels/%d' % channel.id)
+                            return flask.redirect('/channels/config/%d' % channel.id, code=303)
                     else:
                         resp.forbidden()
                     form.name = channel.name
