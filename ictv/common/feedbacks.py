@@ -24,7 +24,7 @@ from ictv.flask.migration_adapter import Storage
 
 def get_feedbacks():
     """ Returns feedbacks available for this request. """
-    return Feedbacks(flask.session.__dict__.get('feedbacks', []))
+    return Feedbacks(flask.session['feedbacks'] if 'feedbacks' in flask.session else [])
 
 
 def get_next_feedbacks():
@@ -32,22 +32,25 @@ def get_next_feedbacks():
         Returns feedbacks available for the next request.
         This is implemented for compatibility reasons until all pages implement a Post/Redirect/Get pattern.
     """
-    return Feedbacks(flask.session.__dict__.get('next_request_feedbacks', []))
+    return Feedbacks(flask.session['next_request_feedbacks'] if 'next_request_feedbacks' in flask.session else [])
 
 
 def add_feedback(type, message, value=None):
-    feedbacks = flask.session.__dict__.get('next_request_feedbacks', [])
+    if "user" in flask.session:
+        feedbacks = flask.session['next_request_feedbacks']
+    else:
+        feedbacks = []
     feedbacks.append({'type': type, 'message': message, 'value': value})
-    flask.session.next_request_feedbacks = feedbacks
+    flask.session['next_request_feedbacks'] = feedbacks
 
 
 def rotate_feedbacks(res):
     # Avoid processing for static files
     if '/static/' in flask.request.path:
       return res
-
-    flask.session.feedbacks = flask.session.__dict__.get('next_request_feedbacks', [])
-    flask.session.next_request_feedbacks = []
+    if 'next_request_feedbacks' in flask.session:
+        flask.session['feedbacks'] = flask.session['next_request_feedbacks']
+    flask.session['next_request_feedbacks'] = []
     return res
 
 
