@@ -195,6 +195,19 @@ class TemplatesMeta(type):
                 templates[os.path.splitext(template)[0]] = {}
 
         for template in templates:
+            def f(type):
+                def g(*args, **kwargs):
+                    id = type + '-' + str(kwargs['number'])
+                    templates[template][id] = {'max_chars': kwargs['max_chars']} if 'max_chars' in kwargs else {}
+                return g
+
+            dummy_renderer = SlideRenderer({'title': f('title'), 'subtitle': f('subtitle'),
+                            'img': f('image'),
+                            'logo': f('logo'), 'text': f('text'), 'background': f('background')}, None)
+
+            # Useful to set some attribute in the template
+            getattr(dummy_renderer.slide_renderer, template)(slide=None)
+
             variables = get_const_in_template(template)
             templates[template]['name'] = variables['name']
             templates[template]['description'] = variables['description']

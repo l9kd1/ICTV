@@ -90,8 +90,8 @@ class ImmediateFeedback(Exception):
 
 
 def store_form(form):
-    flask.session.form = form
+    flask.session['form'] = form
 
 
-def pop_previous_form():
-    return flask.session.__dict__.pop("form",{})
+def pop_previous_form() -> Storage:
+    return flask.session.pop('form', {})

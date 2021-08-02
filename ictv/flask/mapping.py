@@ -57,4 +57,4 @@ def init_flask_url_mapping(app):
     app.add_url_rule('/tour/<string:status>', view_func=ictv.pages.utils.TourPage.as_view('TourPage'), methods=get_methods(ictv.pages.utils.TourPage))
     app.add_url_rule('/client/ks/<path:file>', view_func=ictv.client.pages.client_pages.Kickstart.as_view('Kickstart'), methods=get_methods(ictv.client.pages.client_pages.Kickstart))
     app.add_url_rule('/emails', view_func=ictv.pages.emails_page.EmailPage.as_view('EmailPage'), methods=get_methods(ictv.pages.emails_page.EmailPage))
-    app.add_url_rule('/transcoding/<path:b64_path>/progress', view_func=ictv.storage.transcoding_page.ProgressPage.as_view('ProgressPage'), methods=get_methods(ictv.storage.transcoding_page.ProgressPage))
+    app.add_url_rule('/transcoding/<string:b64_path>/progress', view_func=ictv.storage.transcoding_page.ProgressPage.as_view('ProgressPage'), methods=get_methods(ictv.storage.transcoding_page.ProgressPage))

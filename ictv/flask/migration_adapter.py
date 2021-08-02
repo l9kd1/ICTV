@@ -64,6 +64,9 @@ class FrankenFlask(Flask):
         # Copying the slide renderer
         app.ictv_renderer = self.ictv_renderer
 
+        # Needed in editor to transcode video uploaded
+        app.transcoding_queue = self.transcoding_queue
+
         # Duplicating the secret_key to make the session accessible
         # WARN: MUST be the same as self.secret_key
         app.secret_key = self.secret_key
@@ -123,7 +126,7 @@ class FrankenFlask(Flask):
         self.pre_processors.append({"factory":factory,"cascade":cascade,"needs_app":needs_app,"applied":False})
         if (cascade):
             for value in self.appset:
-                register_before_request(factory,cascade,needs_app)
+                value.register_before_request(factory,cascade,needs_app)
 
     def register_after_request(self,factory,cascade=False,needs_app=False):
         """
