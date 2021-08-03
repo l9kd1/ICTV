@@ -35,7 +35,7 @@ from ictv.libs.html import HTML
 from ictv.plugin_manager.plugin_capsule import PluginCapsule
 from ictv.plugin_manager.plugin_slide import PluginSlide
 
-from ictv.flaks.migration_adapter import render_jinja
+from ictv.flask.migration_adapter import render_jinja
 from jinja2 import Environment, FileSystemLoader, nodes
 
 
@@ -465,9 +465,9 @@ def make_background(**kwargs):
             size = kwargs['content'][id]['size']
             color = kwargs['content'][id]['color'] if 'color' in kwargs['content'][id] else 'black'
             attrs = 'data-background-image="' + src + '" data-background-size="' + size + '" data-background-color="' + color + '"'
-        elif 'iframe' in kwargs['content'][id]:
+        elif 'iframe' in kwargs['content'].get(id, {}):
             attrs = 'data-background-iframe="' + '/static/' + kwargs['content'][id]['iframe'] + '"'
-        elif 'video' in kwargs['content'][id]:
+        elif 'video' in kwargs['content'].get(id, {}):
             attrs = 'data-background-video="%s"' % kwargs['content'][id]['video']
         else:
             return ''

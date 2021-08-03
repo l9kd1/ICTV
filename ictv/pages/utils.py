@@ -113,6 +113,7 @@ class ICTVPage(MethodView):
         for key,value in form_aslists:
             if len(value)>1:
                 finaldict[key]=value
+        finaldict.update(flask.request.files)
         return Storage(finaldict)
 
     def input(self, **defaults) -> Storage:

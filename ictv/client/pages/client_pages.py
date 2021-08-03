@@ -43,7 +43,7 @@ class Kickstart(ICTVPage):
 
             response = flask.Response(content)
             response.headers['Content-Type'] = 'application/zip'
-            return content
+            return response
         resp.notfound()
 
     @staticmethod
