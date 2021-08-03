@@ -22,7 +22,7 @@
 import hashlib
 from logging import getLogger
 
-import web
+
 import flask
 from ictv.common import utils
 

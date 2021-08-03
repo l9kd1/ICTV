@@ -19,7 +19,7 @@
 #    You should have received a copy of the GNU Affero General Public License
 #    along with ICTV.  If not, see <http://www.gnu.org/licenses/>.
 
-import web
+
 from sqlobject import SQLObjectNotFound
 
 from ictv.models.screen import ScreenMac

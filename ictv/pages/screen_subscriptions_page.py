@@ -21,7 +21,7 @@
 
 import json
 
-import web
+
 from sqlobject import SQLObjectNotFound
 
 from ictv.models.channel import PluginChannel, Channel

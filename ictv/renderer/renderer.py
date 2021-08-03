@@ -26,7 +26,7 @@ import sys
 from copy import deepcopy
 from html import unescape
 
-import web
+
 import yaml
 
 from ictv.common import utils, get_root_path
@@ -35,7 +35,7 @@ from ictv.libs.html import HTML
 from ictv.plugin_manager.plugin_capsule import PluginCapsule
 from ictv.plugin_manager.plugin_slide import PluginSlide
 
-from web.contrib.template import render_jinja
+from ictv.flaks.migration_adapter import render_jinja
 from jinja2 import Environment, FileSystemLoader, nodes
 
 
@@ -175,7 +175,7 @@ def read_raw_template(template):
 
 def get_const_in_template(template_name):
     """ Function to retrieve the constant variables declared inside a jinja template. """
-    
+
     env = Environment()
     parsed_content = env.parse(read_raw_template(template_name))
 

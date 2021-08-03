@@ -20,7 +20,7 @@
 #    along with ICTV.  If not, see <http://www.gnu.org/licenses/>.
 
 import logging
-import web
+
 from sqlobject import SQLObjectNotFound
 
 from ictv.models.plugin import Plugin

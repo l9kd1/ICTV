@@ -20,3 +20,6 @@ def notfound(message=None):
 
 def nomethod():
     flask.abort(405,'405 Method Not Allowed')
+
+def internalerror(message=None):
+    flask.abort(500,message)

@@ -22,7 +22,7 @@
 import json
 from datetime import datetime,timedelta
 
-import web
+
 from sqlobject import SQLObjectNotFound, SQLObjectIntegrityError
 from sqlobject.dberrors import DuplicateEntryError
 

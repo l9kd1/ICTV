@@ -36,11 +36,13 @@ class Kickstart(ICTVPage):
             if self._path_has_ext(path, 'zip'):
                 flags += 'b'
                 make_client_zip()
-                web.header('Content-Type', 'application/zip')
             with open(path, flags) as f:
                 content = f.read()
             if self._path_has_ext(path, 'ks') or self._path_has_ext(path, 'cfg'):
                 content = content.format(ictv_root_url=flask.g.homedomain, **self.config['client'])
+
+            response = flask.Response(content)
+            response.headers['Content-Type'] = 'application/zip'
             return content
         resp.notfound()
 

@@ -89,11 +89,11 @@ class MetadataPage(ICTVPage):
         errors = settings.validate_metadata(metadata)
 
         if len(errors) == 0:
-            web.header('Content-Type', 'text/xml')
+            response = flask.Response(metadata)
+            response.headers['Content-Type'] = 'text/xml'
             return metadata
         else:
-            web.ctx.status = '500 Internal Server Error'
-            return ', '.join(errors)
+            resp.internalerror(', '.join(errors))
 
 
 class Shibboleth(ICTVPage):
