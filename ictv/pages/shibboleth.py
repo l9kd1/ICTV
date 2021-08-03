@@ -91,7 +91,7 @@ class MetadataPage(ICTVPage):
         if len(errors) == 0:
             response = flask.Response(metadata)
             response.headers['Content-Type'] = 'text/xml'
-            return metadata
+            return response
         else:
             resp.internalerror(', '.join(errors))
 

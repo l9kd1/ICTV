@@ -35,7 +35,7 @@ from ictv.libs.html import HTML
 from ictv.plugin_manager.plugin_capsule import PluginCapsule
 from ictv.plugin_manager.plugin_slide import PluginSlide
 
-from ictv.flaks.migration_adapter import render_jinja
+from ictv.flask.migration_adapter import render_jinja
 from jinja2 import Environment, FileSystemLoader, nodes
 
 
