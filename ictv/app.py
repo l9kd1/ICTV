@@ -293,7 +293,7 @@ def get_app(config, sessions_path=""):
     app = FrankenFlask(__name__)
 
     # The following line might be used to speedup queries
-    #app.config["SEND_FILE_MAX_AGE_DEFAULT"]=100
+    app.config["SEND_FILE_MAX_AGE_DEFAULT"]=300
 
     app.config.update(**config)
 
@@ -316,11 +316,9 @@ def get_app(config, sessions_path=""):
         app.config['MAIL_USE_TLS'] = smtp_conf.get('starttls', False)
 
     # Create a persistent HTTP session storage for the app
-    # app.session = web.session.Session(app, OptimisticThreadSafeDisktore(os.path.join(sessions_path, 'sessions')))
     app.secret_key = 'fwerrknu384nzAUGGDAG238hmnasd'
 
-    # # Populate the web.py templates globals
-    # Populate the web.py templates globals
+    # Populate the jinja templates globals
     template_globals = {'session': app.session,
                         'get_feedbacks': get_feedbacks, 'get_next_feedbacks': get_next_feedbacks,
                         'pop_previous_form': pop_previous_form,
@@ -332,28 +330,18 @@ def get_app(config, sessions_path=""):
                         'homedomain': lambda: "/".join(flask.request.url.split('/')[:3]), 'generate_secret': generate_secret,
                         'version': lambda: app.version, 'pretty_print_size': pretty_print_size, 'timesince': timesince,
                         'User': User, 'get_user': lambda: User.get(app.session['user']['id'])}
-    # Init the web.py renderer used for the admin interface
-    template_kwargs = {'loc': os.path.join(get_root_path(), 'templates/'),
-                       'cache': not app.config['debug']['debug_on_error'],
-                       'globals': template_globals}
 
-    ### Jinja2 ###
+    ### Jinja2 renderer ###
     app.renderer = render_jinja(os.path.join(get_root_path(), 'templates/'))
     app.renderer._lookup.globals.update(base='base.html', **template_globals)
 
     app.standalone_renderer = render_jinja(os.path.join(get_root_path(), 'templates/'))
     app.standalone_renderer._lookup.globals.update(**template_globals)
-    ###########
 
     # Init loggers
     load_loggers_stats()
     # Determine logging level and user feedback when an internal error occurs based on ICTV core config
     level = logging.INFO
-
-    # TODO delete the obsolete following lines
-    #if app.config['debug']['debug_on_error']:
-    #    level = logging.DEBUG
-    #    app.internalerror = web.debugerror
 
     loggers_to_init = ['app', 'pages', 'screens', 'plugin_manager', 'storage_manager', 'local_login', 'database', 'transcoding_queue']
     for logger_name in loggers_to_init:
