@@ -46,7 +46,6 @@ from ictv.models.log_stat import LogStat
 from ictv.models.role import UserPermissions
 from ictv.models.template import Template
 from ictv.models.user import User
-from ictv.common.diskstore import OptimisticThreadSafeDisktore
 from ictv.common.feedbacks import rotate_feedbacks, get_feedbacks, pop_previous_form, get_next_feedbacks
 from ictv.common.logging import init_logger, load_loggers_stats
 from ictv.common.utils import make_tooltip, make_alert, generate_secret, pretty_print_size, timesince, is_test, sidebar, urls
