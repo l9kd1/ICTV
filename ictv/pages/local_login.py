@@ -66,7 +66,7 @@ class GetResetLink(ICTVAuthPage):
         user = User.get(self.session['user']['id'])
         user.reset_secret = utils.generate_secret()
         logger.info('User %s requested a new password reset link', user.log_name)
-        resp.seeother(self.url_for(ResetPage, user.reset_secret))
+        resp.seeother(flask.url_for("ResetPage", user.reset_secret))
 
 
 class ResetPage(ICTVPage):
@@ -76,7 +76,7 @@ class ResetPage(ICTVPage):
             logger.warning('IP %s tried to access password reset page with invalid secret', flask.request.remote_addr)
             if 'user' in self.session:
                 logger.warning('User %s is currently connected', User.get(self.session['user']['id']).log_name)
-            raise web.redirect('/')
+            resp.seeother('/')
         return self.standalone_renderer.reset(user=user)
 
     def post(self, secret):
@@ -94,7 +94,7 @@ class ResetPage(ICTVPage):
         except ImmediateFeedback:
             return self.standalone_renderer.reset(user=user)
         add_feedback('reset', 'ok')
-        resp.seeother(self.url_for(LoginPage))
+        resp.seeother(flask.url_for("LoginPage"))
 
 
 def hash_password(password):
